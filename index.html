@@ -1,0 +1,2307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RegAssist – Admin Panel</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,sans-serif}
+body{background:#080d18;min-height:100vh;color:white}
+.a-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-box{background:#0f1828;border-radius:24px;padding:2.5rem;width:100%;max-width:400px;border:1px solid #1e2d45;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+.login-logo{text-align:center;margin-bottom:2rem}
+.login-logo .icon{width:64px;height:64px;background:rgba(231,76,60,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;color:#e74c3c;border:2px solid rgba(231,76,60,0.35)}
+.login-logo h2{color:white;font-size:1.6rem;margin-bottom:0.3rem}
+.login-logo p{color:rgba(255,255,255,0.4);font-size:0.85rem}
+.wrap{display:flex;min-height:100vh;position:relative}
+.sidebar{width:248px;background:#0f1828;border-right:1px solid #1a2640;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;transition:0.3s}
+.s-logo{padding:1.3rem;border-bottom:1px solid #1a2640;display:flex;align-items:center;gap:10px}
+.s-logo .si{width:36px;height:36px;background:rgba(231,76,60,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#e74c3c;font-size:1.1rem;flex-shrink:0}
+.s-logo span{color:white;font-size:1rem;font-weight:700}
+.nav-sec{padding:0.5rem 1rem;font-size:0.62rem;font-weight:700;color:rgba(255,255,255,0.28);letter-spacing:1.5px;text-transform:uppercase;margin-top:0.4rem}
+.nav-item{display:flex;align-items:center;gap:10px;padding:0.78rem 1.1rem;color:rgba(255,255,255,0.55);cursor:pointer;transition:0.2s;border-radius:10px;margin:2px 6px;font-size:0.87rem}
+.nav-item:hover,.nav-item.active{background:rgba(231,76,60,0.1);color:#e74c3c}
+.nav-item i{width:18px;text-align:center;font-size:0.9rem;flex-shrink:0}
+.nav-item .nb{background:#e74c3c;color:white;border-radius:20px;padding:1px 7px;font-size:0.68rem;font-weight:700;margin-left:auto}
+.main{margin-left:248px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-y:auto}
+.topbar{background:#0f1828;border-bottom:1px solid #1a2640;padding:0.7rem 1.3rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar h2{color:white;font-size:1rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
+.content{padding:1.3rem;flex:1;overflow-y:auto}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.8rem;margin-bottom:1.1rem}
+.stat-card{background:#0f1828;border-radius:18px;padding:1.1rem;border:1px solid #1a2640;cursor:pointer;transition:0.2s}
+.stat-card:hover{border-color:#e74c3c;transform:translateY(-2px)}
+.stat-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:0.7rem}
+.stat-num{font-size:1.9rem;font-weight:800}
+.stat-label{color:rgba(255,255,255,0.45);font-size:0.76rem;margin-top:2px}
+.card{background:#0f1828;border-radius:18px;padding:1.3rem;border:1px solid #1a2640;margin-bottom:1.1rem}
+.card-title{font-size:1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;color:white}
+.card-title i{color:#e74c3c}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;min-width:600px}
+th{text-align:left;padding:9px 10px;color:rgba(255,255,255,0.4);font-weight:600;font-size:0.72rem;text-transform:uppercase;border-bottom:1px solid #1a2640;white-space:nowrap}
+td{padding:10px;color:white;border-bottom:1px solid #141f30;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{padding:3px 9px;border-radius:18px;font-size:0.72rem;font-weight:600;display:inline-block}
+.b-pending{background:rgba(243,156,18,0.18);color:#f39c12;border:1px solid rgba(243,156,18,0.3)}
+.b-approved,.b-verified{background:rgba(39,174,96,0.18);color:#27ae60;border:1px solid rgba(39,174,96,0.3)}
+.b-rejected{background:rgba(231,76,60,0.18);color:#e74c3c;border:1px solid rgba(231,76,60,0.3)}
+.b-paid{background:rgba(52,152,219,0.18);color:#3498db;border:1px solid rgba(52,152,219,0.3)}
+.b-in_progress{background:rgba(155,89,182,0.18);color:#9b59b6;border:1px solid rgba(155,89,182,0.3)}
+.b-payment_submitted{background:rgba(39,174,96,0.18);color:#27ae60;border:1px solid rgba(39,174,96,0.3)}
+.form-group{margin-bottom:0.9rem}
+.form-label{color:rgba(255,255,255,0.65);font-size:0.82rem;margin-bottom:5px;display:block;font-weight:500}
+.form-input{width:100%;padding:10px 13px;background:#080d18;border:1px solid #1a2640;border-radius:12px;color:white;font-size:0.87rem;transition:0.2s;-webkit-appearance:none}
+.form-input:focus{border-color:#e74c3c;outline:none}
+select.form-input option{background:#0f1828}
+textarea.form-input{resize:vertical;min-height:80px}
+.btn{padding:9px 18px;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.85rem;transition:0.2s;display:inline-flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn-primary{background:#e74c3c;color:white}.btn-primary:hover{background:#c0392b}
+.btn-success{background:#27ae60;color:white}.btn-success:hover{background:#229954}
+.btn-warning{background:#e67e22;color:white}.btn-warning:hover{background:#d35400}
+.btn-info{background:#3498db;color:white}.btn-info:hover{background:#2980b9}
+.btn-secondary{background:#1e2d45;color:white}.btn-secondary:hover{background:#253a55}
+.btn-danger{background:#e74c3c;color:white}.btn-danger:hover{background:#c0392b}
+.btn-sm{padding:5px 10px;font-size:0.76rem;border-radius:8px}
+.btn-xs{padding:3px 8px;font-size:0.7rem;border-radius:6px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9000;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto}
+.modal-content{background:#0f1828;border-radius:20px;width:100%;max-width:640px;border:1px solid #2a3a55;padding:1.8rem;margin:auto;margin-top:2rem;margin-bottom:2rem}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem;gap:8px}
+.modal-title{font-size:1.1rem;font-weight:700;flex:1;min-width:0}
+.close-btn{background:none;border:none;color:rgba(255,255,255,0.45);font-size:2rem;cursor:pointer;line-height:1}.close-btn:hover{color:white}
+.section{display:none}.section.active{display:block}
+.tabs{display:flex;gap:4px;margin-bottom:1.1rem;flex-wrap:wrap}
+.tab-btn{padding:6px 16px;border:none;border-radius:8px;background:#1a2640;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.82rem;font-weight:600;transition:0.2s}
+.tab-btn.active{background:rgba(231,76,60,0.18);color:#e74c3c}
+.search-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.search-row input,.search-row select{flex:1;min-width:140px}
+.mini-prog{height:6px;background:#1a2640;border-radius:4px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle}
+.mini-prog-fill{height:100%;background:linear-gradient(90deg,#e74c3c,#e67e22);border-radius:4px}
+.doc-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin:10px 0}
+.doc-thumb{border-radius:10px;overflow:hidden;border:1px solid #2a3a55;cursor:pointer;position:relative;aspect-ratio:1;background:#080d18}
+.doc-thumb img{width:100%;height:100%;object-fit:cover;transition:0.2s}
+.doc-thumb img:hover{transform:scale(1.05)}
+.doc-thumb .fi{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#3498db;font-size:1.8rem}
+.doc-thumb .fi span{font-size:0.62rem;color:rgba(255,255,255,0.5);text-align:center;padding:0 4px}
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:99000;align-items:center;justify-content:center;flex-direction:column}
+.lightbox.show{display:flex}
+.lightbox img{max-width:92vw;max-height:84vh;border-radius:14px}
+.lb-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.1);border:none;color:white;font-size:1.6rem;cursor:pointer;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+/* PROGRESS PANEL */
+.progress-quick-panel{background:#080d18;border-radius:16px;padding:1.2rem;margin:1rem 0;border:1px solid #1e3355}
+.prog-steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:1rem}
+.prog-step-btn{padding:12px 8px;border:2px solid #1a2640;border-radius:14px;background:#0f1828;color:rgba(255,255,255,0.5);cursor:pointer;text-align:center;transition:0.2s;font-size:0.78rem;font-weight:600}
+.prog-step-btn:hover{border-color:#e67e22;color:#e67e22}
+.prog-step-btn.selected{border-color:#27ae60;background:rgba(39,174,96,0.12);color:#27ae60}
+.prog-step-btn .pct{font-size:1.3rem;font-weight:800;display:block;margin-bottom:3px}
+.prog-step-btn .plabel{font-size:0.68rem;color:inherit;display:block}
+.prog-bar-preview{height:10px;background:#1a2640;border-radius:10px;overflow:hidden;margin:0.8rem 0}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,#27ae60,#2ecc71);border-radius:10px;transition:width 0.5s}
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed #2a3a55;border-radius:16px;padding:1.5rem;text-align:center;cursor:pointer;transition:0.2s;background:#080d18;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:#e74c3c;background:rgba(231,76,60,0.05)}
+.upload-zone i{font-size:2.2rem;color:#e74c3c;margin-bottom:8px;display:block}
+.upload-zone p{color:rgba(255,255,255,0.5);font-size:0.85rem}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;touch-action:manipulation}
+.upload-preview-box{background:#080d18;border-radius:14px;padding:10px;margin-top:10px;display:flex;align-items:center;gap:10px;border:1px solid #27ae60}
+.upload-preview-box img{width:60px;height:60px;object-fit:cover;border-radius:10px}
+.upload-preview-box .doc-icon-big{width:60px;height:60px;border-radius:10px;background:rgba(52,152,219,0.15);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#3498db}
+.upload-preview-info{flex:1}
+.upload-preview-info .fname{color:white;font-size:0.85rem;font-weight:600}
+.upload-preview-info .fsize{color:rgba(255,255,255,0.4);font-size:0.75rem}
+.upload-remove{background:none;border:none;color:#e74c3c;cursor:pointer;font-size:1.2rem}
+/* NOTIFY */
+.notif{position:fixed;top:70px;right:16px;z-index:99999;padding:11px 18px;border-radius:12px;color:white;font-weight:600;font-size:0.85rem;box-shadow:0 4px 18px rgba(0,0,0,0.4);animation:slideIn 0.3s;max-width:300px}
+@keyframes slideIn{from{opacity:0;transform:translateX(80px)}to{opacity:1;transform:translateX(0)}}
+.notif.success{background:#27ae60}.notif.error{background:#e74c3c}.notif.info{background:#3498db}
+.info-row{display:flex;padding:7px 0;border-bottom:1px solid #1a2640;font-size:0.86rem}
+.info-row:last-child{border-bottom:none}
+.info-label{color:rgba(255,255,255,0.45);width:140px;flex-shrink:0}
+.info-value{color:white;font-weight:500;flex:1}
+.bank-display{background:#080d18;border-radius:14px;padding:1rem;margin-top:1rem;border:1px solid #1e3355}
+.bank-display-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1a2640}
+.bank-display-row:last-child{border-bottom:none}
+.bank-display-label{color:rgba(255,255,255,0.4);font-size:0.82rem}
+.bank-display-value{color:#f39c12;font-weight:700;font-size:0.9rem}
+.sticker-complete-card{background:linear-gradient(135deg,#0d2218,#102a1a);border:1px solid rgba(39,174,96,0.3);border-radius:16px;padding:1.2rem;margin:1rem 0}
+.sticker-complete-card .sticker-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sticker-complete-card .sticker-icon{width:44px;height:44px;border-radius:12px;background:rgba(39,174,96,0.15);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#27ae60}
+.sticker-preview-img{width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin:8px 0;border:1px solid rgba(39,174,96,0.3)}
+.sticker-preview-doc{background:#080d18;border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;margin:8px 0;border:1px solid rgba(52,152,219,0.3)}
+/* FINE TYPE TAGS */
+.fine-type-tag{display:inline-flex;align-items:center;gap:6px;background:#0f1828;border:1px solid #2a3a55;border-radius:10px;padding:6px 12px;margin:4px;font-size:0.83rem}
+.fine-type-tag .ft-name{color:white;font-weight:600}
+.fine-type-tag .ft-fee{color:#f39c12;font-size:0.78rem}
+.fine-type-tag .ft-del{background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:0.9rem;padding:0;line-height:1;transition:0.2s}
+.fine-type-tag .ft-del:hover{color:#e74c3c}
+/* DELETE confirm */
+.del-confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99500;align-items:center;justify-content:center;padding:1rem}
+.del-confirm-box{background:#0f1828;border-radius:20px;padding:1.5rem;max-width:380px;width:100%;border:1px solid rgba(231,76,60,0.4);text-align:center;margin:0 0.5rem}
+.del-confirm-icon{width:60px;height:60px;border-radius:50%;background:rgba(231,76,60,0.12);border:2px solid rgba(231,76,60,0.4);display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#e74c3c;margin:0 auto 1rem}
+.cc-table{width:100%;border-collapse:collapse}
+.cc-table th{background:#080d18;padding:8px 10px;text-align:left;font-size:0.75rem;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #1a2640}
+.cc-table td{padding:8px 10px;border-bottom:1px solid #141f30;vertical-align:middle}
+.cc-table tr:last-child td{border-bottom:none}
+.cc-table input{width:90px;padding:5px 8px;background:#080d18;border:1px solid #1a2640;border-radius:8px;color:white;font-size:0.83rem}
+.cc-table input:focus{border-color:#e74c3c;outline:none}
+/* ===== MOBILE BOTTOM NAV ===== */
+.mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1828;border-top:1px solid #1a2640;z-index:200;padding:6px 0;flex-direction:row;align-items:stretch;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.mob-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 2px;color:rgba(255,255,255,0.4);cursor:pointer;transition:0.2s;position:relative;gap:3px;min-width:0}
+.mob-nav-item i{font-size:1.15rem;line-height:1}
+.mob-nav-item span{font-size:0.58rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center}
+.mob-nav-item.active{color:#e74c3c}
+.mob-nav-item .mob-nb{position:absolute;top:2px;right:50%;transform:translateX(60%);background:#e74c3c;color:white;border-radius:20px;min-width:16px;height:16px;padding:0 4px;font-size:0.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #0f1828}
+/* ===== MOBILE REQUEST CARDS ===== */
+.req-card{background:#0f1828;border-radius:16px;padding:1rem;margin-bottom:10px;border:1px solid #1a2640}
+.req-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.req-card-title{color:white;font-weight:700;font-size:0.9rem;line-height:1.3}
+.req-card-sub{color:rgba(255,255,255,0.45);font-size:0.74rem;margin-top:2px}
+.req-card-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.req-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.req-card-actions .btn{flex:1;justify-content:center;min-width:0;font-size:0.78rem;padding:8px 10px}
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{left:-280px;width:280px;z-index:500}
+  .sidebar.mob-open{left:0}
+  #sbOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:499}
+  #sbOverlay.show{display:block}
+  .main{margin-left:0}
+  .content{padding:0.8rem;padding-bottom:84px}
+  .mob-bottom-nav{display:flex}
+  .topbar{padding:0.55rem 0.8rem}
+  .topbar h2{font-size:0.95rem}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:0.6rem}
+  .stat-card{padding:0.8rem}
+  .stat-num{font-size:1.5rem}
+  .card{padding:1rem;border-radius:14px}
+  .desk-table{display:none!important}
+  .mob-cards{display:block!important}
+  .prog-steps-grid{grid-template-columns:repeat(2,1fr)}
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal-content{border-radius:24px 24px 0 0;margin:0;max-height:92vh;overflow-y:auto;padding:1.2rem 1rem;max-width:100%}
+  .info-label{width:110px;font-size:0.8rem}
+  .tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .tab-btn{white-space:nowrap;flex-shrink:0;padding:6px 12px}
+  .search-row{gap:6px}
+}
+@media(min-width:769px){
+  .mob-bottom-nav{display:none!important}
+  .mob-cards{display:none!important}
+  .desk-table{display:block!important}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="aLogin" class="a-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon"><i class="fas fa-clipboard-check"></i></div>
+      <h2>RegAssist Admin</h2>
+      <p>Secure Administrative Portal</p>
+    </div>
+    <div id="loginErr" style="display:none;padding:9px;border-radius:10px;margin-bottom:1rem;text-align:center;font-size:0.85rem;background:rgba(231,76,60,0.18);border:1px solid rgba(231,76,60,0.4);color:#e74c3c"></div>
+    <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="aUser" placeholder="admin"></div>
+    <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="aPass" placeholder="••••••••"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="aDash" style="display:none" class="wrap">
+  <!-- Sidebar overlay for mobile -->
+  <div id="sbOverlay" onclick="toggleSb()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="s-logo" style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="si"><i class="fas fa-clipboard-check"></i></div>
+        <span>RegAssist Admin</span>
+      </div>
+      <button onclick="toggleSb()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:1.4rem;cursor:pointer;padding:4px;line-height:1;display:none" id="sbCloseBtn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="nav-sec">Overview</div>
+    <div class="nav-item active" onclick="goSection('dashboard',this)"><i class="fas fa-chart-pie"></i><span>Dashboard</span></div>
+    <div class="nav-item" onclick="goSection('revenue',this)"><i class="fas fa-coins"></i><span>Revenue</span></div>
+    <div class="nav-sec">Requests</div>
+    <div class="nav-item" onclick="goSection('vehicles',this)"><i class="fas fa-car"></i><span>Vehicles</span><span class="nb" id="vBadge">0</span></div>
+    <div class="nav-item" onclick="goSection('serviceReqs',this)"><i class="fas fa-concierge-bell"></i><span>Services</span><span class="nb" id="sBadge">0</span></div>
+    <div class="nav-item" onclick="goSection('fineReqs',this)"><i class="fas fa-exclamation-triangle"></i><span>Fines</span><span class="nb" id="fBadge">0</span></div>
+    <div class="nav-item" onclick="goSection('bizReqs',this)"><i class="fas fa-briefcase"></i><span>Business</span><span class="nb" id="bBadge">0</span></div>
+    <div class="nav-sec">Management</div>
+    <div class="nav-item" onclick="goSection('users',this)"><i class="fas fa-users"></i><span>Users</span></div>
+    <div class="nav-item" onclick="goSection('allDocs',this)"><i class="fas fa-folder-open"></i><span>All Documents</span></div>
+    <div class="nav-item" onclick="goSection('customPricing',this)"><i class="fas fa-tag"></i><span>Custom Pricing</span></div>
+    <div class="nav-sec">Pricing & Settings</div>
+    <div class="nav-item" onclick="goSection('typePricing',this)"><i class="fas fa-car-side"></i><span>Vehicle Type Pricing</span></div>
+    <div class="nav-item" onclick="goSection('bizPricing',this)"><i class="fas fa-briefcase"></i><span>Business Pricing</span></div>
+    <div class="nav-item" onclick="goSection('fineTypes',this)"><i class="fas fa-gavel"></i><span>Fine Types</span></div>
+    <div class="nav-item" onclick="goSection('bank',this)"><i class="fas fa-university"></i><span>Bank Details</span></div>
+    <div class="nav-item" onclick="goSection('uploads',this)"><i class="fas fa-cloud-upload-alt"></i><span>Upload to Users</span></div>
+    <div class="nav-item" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <div class="mob-bottom-nav" id="mobBottomNav">
+    <div class="mob-nav-item active" id="mbn_dashboard" onclick="goSection('dashboard',null);setMobNav('dashboard')">
+      <i class="fas fa-chart-pie"></i><span>Home</span>
+    </div>
+    <div class="mob-nav-item" id="mbn_vehicles" onclick="goSection('vehicles',null);setMobNav('vehicles')">
+      <i class="fas fa-car"></i><span>Vehicles</span>
+      <span class="mob-nb" id="mvBadge">0</span>
+    </div>
+    <div class="mob-nav-item" id="mbn_serviceReqs" onclick="goSection('serviceReqs',null);setMobNav('serviceReqs')">
+      <i class="fas fa-concierge-bell"></i><span>Services</span>
+      <span class="mob-nb" id="msBadge">0</span>
+    </div>
+    <div class="mob-nav-item" id="mbn_fineReqs" onclick="goSection('fineReqs',null);setMobNav('fineReqs')">
+      <i class="fas fa-gavel"></i><span>Fines</span>
+      <span class="mob-nb" id="mfBadge">0</span>
+    </div>
+    <div class="mob-nav-item" id="mbn_more" onclick="toggleSb();setMobNav('more')">
+      <i class="fas fa-bars"></i><span>More</span>
+    </div>
+  </div>
+
+  <div class="main" id="mainArea">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-secondary btn-sm" onclick="toggleSb()"><i class="fas fa-bars"></i></button>
+        <h2 id="pageTitle">Dashboard</h2>
+      </div>
+      <span style="background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:5px 12px;border-radius:16px;font-size:0.82rem;font-weight:600"><i class="fas fa-shield-alt"></i> Admin</span>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="dashboardSection" class="section active">
+        <div class="stats-grid">
+          <div class="stat-card" onclick="goSection('vehicles',null)"><div class="stat-icon" style="background:rgba(243,156,18,0.12)"><i class="fas fa-car" style="color:#f39c12"></i></div><div class="stat-num" id="stVeh">0</div><div class="stat-label">Pending Vehicles</div></div>
+          <div class="stat-card" onclick="goSection('serviceReqs',null)"><div class="stat-icon" style="background:rgba(52,152,219,0.12)"><i class="fas fa-concierge-bell" style="color:#3498db"></i></div><div class="stat-num" id="stSvc">0</div><div class="stat-label">Service Requests</div></div>
+          <div class="stat-card" onclick="goSection('fineReqs',null)"><div class="stat-icon" style="background:rgba(231,76,60,0.12)"><i class="fas fa-exclamation-triangle" style="color:#e74c3c"></i></div><div class="stat-num" id="stFine">0</div><div class="stat-label">Fine Requests</div></div>
+          <div class="stat-card" onclick="goSection('bizReqs',null)"><div class="stat-icon" style="background:rgba(155,89,182,0.12)"><i class="fas fa-briefcase" style="color:#9b59b6"></i></div><div class="stat-num" id="stBiz">0</div><div class="stat-label">Business Requests</div></div>
+          <div class="stat-card" onclick="goSection('users',null)"><div class="stat-icon" style="background:rgba(26,188,156,0.12)"><i class="fas fa-users" style="color:#1abc9c"></i></div><div class="stat-num" id="stUsers">0</div><div class="stat-label">Total Users</div></div>
+          <div class="stat-card" onclick="goSection('revenue',null)" style="border-color:rgba(39,174,96,0.3)"><div class="stat-icon" style="background:rgba(39,174,96,0.12)"><i class="fas fa-coins" style="color:#27ae60"></i></div><div class="stat-num" id="stTodayRev" style="color:#27ae60;font-size:1.3rem">MVR 0</div><div class="stat-label">Today's Revenue</div></div>
+          <div class="stat-card" onclick="goSection('revenue',null)"><div class="stat-icon" style="background:rgba(243,156,18,0.12)"><i class="fas fa-chart-line" style="color:#f39c12"></i></div><div class="stat-num" id="stMonthRev" style="font-size:1.3rem">MVR 0</div><div class="stat-label">This Month Revenue</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-university"></i>Current Bank Details</div>
+          <div id="dashBankDisplay"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:0.8rem" onclick="goSection('bank',null)"><i class="fas fa-edit"></i> Edit Bank Details</button>
+        </div>
+        <div class="card"><div class="card-title"><i class="fas fa-clock"></i>Recent Activity</div><div id="recentAct"><p style="color:rgba(255,255,255,0.35);font-size:0.85rem">Loading...</p></div></div>
+      </div>
+
+      <!-- VEHICLES -->
+      <div id="vehiclesSection" class="section">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="filterVeh('pending',this)">Pending</button>
+          <button class="tab-btn" onclick="filterVeh('verified',this)">Verified</button>
+          <button class="tab-btn" onclick="filterVeh('rejected',this)">Rejected</button>
+          <button class="tab-btn" onclick="filterVeh('all',this)">All</button>
+        </div>
+        <div class="search-row"><input type="text" class="form-input" id="vehQ" placeholder="Search plate, model, owner..." oninput="renderVeh()"><button class="btn btn-secondary btn-sm" onclick="loadVehicles()"><i class="fas fa-sync"></i></button></div>
+        <div class="desk-table"><div class="card"><div class="table-wrap"><table><thead><tr><th>Vehicle</th><th>Type</th><th>Owner</th><th>Docs</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="vehBody"></tbody></table></div></div></div>
+        <div class="mob-cards" id="vehCards"></div>
+      </div>
+
+      <!-- SERVICE REQUESTS -->
+      <div id="serviceReqsSection" class="section">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="filterSvc('pending',this)">Pending</button>
+          <button class="tab-btn" onclick="filterSvc('approved',this)">Approved</button>
+          <button class="tab-btn" onclick="filterSvc('rejected',this)">Rejected</button>
+          <button class="tab-btn" onclick="filterSvc('all',this)">All</button>
+        </div>
+        <div class="search-row"><input type="text" class="form-input" id="svcQ" placeholder="Search..." oninput="renderSvc()"><button class="btn btn-secondary btn-sm" onclick="loadSvcReqs()"><i class="fas fa-sync"></i></button></div>
+        <div class="desk-table"><div class="card"><div class="table-wrap"><table><thead><tr><th>Service</th><th>Vehicle</th><th>User</th><th>Amount</th><th>Status</th><th>Progress</th><th>Date</th><th>Actions</th></tr></thead><tbody id="svcBody"></tbody></table></div></div></div>
+        <div class="mob-cards" id="svcCards"></div>
+      </div>
+
+      <!-- FINE REQUESTS -->
+      <div id="fineReqsSection" class="section">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="filterFine('pending_review',this)">Pending Review</button>
+          <button class="tab-btn" onclick="filterFine('approved',this)">Fine Set</button>
+          <button class="tab-btn" onclick="filterFine('paid',this)">Paid</button>
+          <button class="tab-btn" onclick="filterFine('all',this)">All</button>
+        </div>
+        <div class="search-row"><input type="text" class="form-input" id="fineQ" placeholder="Search..." oninput="renderFine()"><button class="btn btn-secondary btn-sm" onclick="loadFineReqs()"><i class="fas fa-sync"></i></button></div>
+        <div class="desk-table"><div class="card"><div class="table-wrap"><table><thead><tr><th>Vehicle</th><th>Owner ID</th><th>User</th><th>Status</th><th>Fine Amount</th><th>Paid</th><th>Date</th><th>Actions</th></tr></thead><tbody id="fineBody"></tbody></table></div></div></div>
+        <div class="mob-cards" id="fineCards"></div>
+      </div>
+
+      <!-- BUSINESS REQUESTS -->
+      <div id="bizReqsSection" class="section">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="filterBiz('pending',this)">Pending</button>
+          <button class="tab-btn" onclick="filterBiz('in_progress',this)">In Progress</button>
+          <button class="tab-btn" onclick="filterBiz('approved',this)">Approved</button>
+          <button class="tab-btn" onclick="filterBiz('rejected',this)">Rejected</button>
+          <button class="tab-btn" onclick="filterBiz('all',this)">All</button>
+        </div>
+        <div class="search-row"><input type="text" class="form-input" id="bizQ" placeholder="Search..." oninput="renderBiz()"><button class="btn btn-secondary btn-sm" onclick="loadBizReqs()"><i class="fas fa-sync"></i></button></div>
+        <div class="desk-table"><div class="card"><div class="table-wrap"><table><thead><tr><th>Service Type</th><th>User</th><th>Fields</th><th>Docs</th><th>Status</th><th>Progress</th><th>Date</th><th>Actions</th></tr></thead><tbody id="bizBody"></tbody></table></div></div></div>
+        <div class="mob-cards" id="bizCards"></div>
+      </div>
+
+      <!-- USERS -->
+      <div id="usersSection" class="section">
+        <div class="search-row"><input type="text" class="form-input" id="userQ" placeholder="Search name, email, phone..." oninput="renderUsers()"><button class="btn btn-secondary btn-sm" onclick="loadUsers()"><i class="fas fa-sync"></i></button></div>
+        <div class="desk-table"><div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Vehicles</th><th>Account</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="userBody"></tbody></table></div></div></div>
+        <div class="mob-cards" id="userCards"></div>
+      </div>
+
+      <!-- REVENUE -->
+      <div id="revenueSection" class="section">
+        <!-- Date filter -->
+        <div class="card" style="padding:1rem 1.3rem">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="card-title" style="margin:0"><i class="fas fa-coins"></i>Revenue Report</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:auto">
+              <select class="form-input" id="revPeriod" onchange="loadRevenue()" style="max-width:160px;padding:7px 12px">
+                <option value="today">Today</option>
+                <option value="7">Last 7 Days</option>
+                <option value="30" selected>Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              <div id="revCustomRange" style="display:none;gap:6px;align-items:center">
+                <input type="date" class="form-input" id="revFrom" style="max-width:150px;padding:7px 12px">
+                <span style="color:rgba(255,255,255,0.4)">to</span>
+                <input type="date" class="form-input" id="revTo" style="max-width:150px;padding:7px 12px">
+                <button class="btn btn-secondary btn-sm" onclick="loadRevenue()"><i class="fas fa-search"></i></button>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="loadRevenue()"><i class="fas fa-sync"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue summary cards -->
+        <div class="stats-grid" id="revSummary" style="margin-bottom:1rem"></div>
+
+        <!-- Daily bar chart -->
+        <div class="card">
+          <div class="card-title"><i class="fas fa-chart-bar"></i>Daily Revenue (MVR)</div>
+          <div style="overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch">
+            <div id="revChart" style="display:flex;align-items:flex-end;gap:6px;min-height:180px;padding:10px 0 0"></div>
+            <div id="revChartLabels" style="display:flex;gap:6px;margin-top:4px"></div>
+            <div style="display:flex;gap:18px;margin-top:10px;font-size:0.78rem;color:rgba(255,255,255,0.55)">
+              <span><span style="display:inline-block;width:12px;height:12px;background:#3498db;border-radius:3px;margin-right:5px;vertical-align:middle"></span>Services</span>
+              <span><span style="display:inline-block;width:12px;height:12px;background:#e74c3c;border-radius:3px;margin-right:5px;vertical-align:middle"></span>Fines</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown table -->
+        <div class="card">
+          <div class="card-title"><i class="fas fa-list-alt"></i>Revenue Breakdown by Day</div>
+          <div class="table-wrap">
+            <table style="min-width:500px">
+              <thead><tr><th>Date</th><th>Service Revenue</th><th>Fine Revenue</th><th>Total</th><th>Transactions</th></tr></thead>
+              <tbody id="revTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOM VEHICLE PRICING -->
+      <div id="customPricingSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-tag"></i>Custom Vehicle Pricing</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.2rem">Set a custom service fee for a specific user's vehicle. This overrides the default vehicle-type pricing for that vehicle only. The user will see this custom price in their app.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Select User</label>
+              <select class="form-input" id="cpUser" onchange="loadCpVehicles()"><option value="">Select user...</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Select Vehicle</label>
+              <select class="form-input" id="cpVehicle" onchange="loadCpCurrentFees()"><option value="">Select vehicle...</option></select>
+            </div>
+          </div>
+          <div id="cpFeeForm" style="display:none">
+            <div style="background:#080d18;border-radius:14px;padding:1.2rem;border:1px solid #1e3355;margin-bottom:1rem">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+                <div style="width:42px;height:42px;border-radius:12px;background:rgba(243,156,18,0.12);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#f39c12"><i class="fas fa-car"></i></div>
+                <div><div id="cpVehicleLabel" style="font-weight:700;font-size:0.95rem"></div><div style="color:rgba(255,255,255,0.5);font-size:0.78rem">Custom fee will override default for this vehicle only</div></div>
+              </div>
+              <div id="cpServiceRows"></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" onclick="saveCpFees()"><i class="fas fa-save"></i> Save Custom Fees</button>
+              <button class="btn btn-danger btn-sm" onclick="clearCpFees()"><i class="fas fa-times"></i> Clear Custom (use default)</button>
+            </div>
+          </div>
+          <div id="cpNoVehicle" style="color:rgba(255,255,255,0.3);font-size:0.85rem;display:none">No verified vehicles for this user.</div>
+        </div>
+
+        <!-- All custom pricing records -->
+        <div class="card">
+          <div class="card-title"><i class="fas fa-list"></i>All Custom Pricing Records</div>
+          <div id="allCpRecords"><p style="color:rgba(255,255,255,0.35);font-size:0.85rem">Loading...</p></div>
+        </div>
+      </div>
+
+      <!-- ALL DOCUMENTS -->
+      <div id="allDocsSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-folder-open"></i>All Documents</div>
+          <div class="search-row">
+            <select class="form-input" id="docUserFilter" onchange="loadAllDocs()" style="max-width:300px"><option value="">All Users</option></select>
+            <select class="form-input" id="docTypeFilter" onchange="loadAllDocs()" style="max-width:200px">
+              <option value="all">All Types</option>
+              <option value="vehicle">Vehicle Docs</option>
+              <option value="service">Service Docs</option>
+              <option value="fine">Fine Docs</option>
+              <option value="business">Business Docs</option>
+              <option value="payment">Payment Slips</option>
+              <option value="admin">Admin Uploads</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="loadAllDocs()"><i class="fas fa-sync"></i></button>
+          </div>
+          <div id="allDocsGrid" class="doc-gallery" style="max-height:70vh;overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <!-- VEHICLE TYPE PRICING (now per-vehicle) -->
+      <div id="typePricingSection" class="section">
+        <!-- Tab switcher: per-vehicle vs by type -->
+        <div style="display:flex;gap:6px;margin-bottom:1.2rem;flex-wrap:wrap">
+          <button class="tab-btn active" id="vtTab1" onclick="switchVtTab('vehicle',this)"><i class="fas fa-car"></i> Per Vehicle Pricing</button>
+          <button class="tab-btn" id="vtTab2" onclick="switchVtTab('type',this)"><i class="fas fa-layer-group"></i> Vehicle Type Defaults</button>
+        </div>
+
+        <!-- PER VEHICLE PRICING -->
+        <div id="vtVehiclePane">
+          <div class="card">
+            <div class="card-title"><i class="fas fa-car"></i>Set Pricing Per Vehicle</div>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.2rem">Select any registered vehicle and set custom service fees. These override the default type pricing for that vehicle only and the user will see these prices in their app.</p>
+            <!-- Step 1: Filters -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem">
+              <div class="form-group" style="margin:0">
+                <label class="form-label">Filter by User</label>
+                <select class="form-input" id="vpUserFilter" onchange="loadVpVehicles()">
+                  <option value="">All Users</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label">Filter by Type</label>
+                <select class="form-input" id="vpTypeFilter" onchange="loadVpVehicles()">
+                  <option value="">All Types</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label">Search Plate</label>
+                <input type="text" class="form-input" id="vpPlateQ" placeholder="e.g. C 1234" oninput="renderVpVehicles()">
+              </div>
+            </div>
+            <!-- Vehicle list -->
+            <div id="vpVehicleList" style="margin-bottom:1rem">
+              <p style="color:rgba(255,255,255,0.35);font-size:0.85rem">Loading vehicles...</p>
+            </div>
+          </div>
+          <!-- Pricing form (shown when vehicle selected) -->
+          <div class="card" id="vpPricingCard" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:46px;height:46px;border-radius:14px;background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#f39c12" id="vpVehicleIcon"><i class="fas fa-car"></i></div>
+                <div>
+                  <div id="vpVehiclePlate" style="font-weight:800;font-size:1.1rem;color:white"></div>
+                  <div id="vpVehicleMeta" style="color:rgba(255,255,255,0.45);font-size:0.78rem"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" onclick="saveVpFees()"><i class="fas fa-save"></i> Save Pricing</button>
+                <button class="btn btn-danger btn-sm" onclick="clearVpFees()"><i class="fas fa-times"></i> Reset to Default</button>
+              </div>
+            </div>
+            <!-- Default vs custom indicator -->
+            <div id="vpCustomBanner" style="display:none;background:linear-gradient(135deg,rgba(243,156,18,0.1),rgba(243,156,18,0.05));border:1px solid rgba(243,156,18,0.4);border-radius:12px;padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:8px">
+              <i class="fas fa-tag" style="color:#f39c12"></i>
+              <span style="color:#f39c12;font-size:0.82rem;font-weight:600">Custom pricing active — user sees these overridden prices</span>
+            </div>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.77rem;margin-bottom:10px"><i class="fas fa-info-circle" style="color:#3498db;margin-right:4px"></i>Greyed values are defaults from vehicle type. Enter a value to override for this vehicle only.</p>
+            <div id="vpPricingForm" style="overflow-x:auto"></div>
+          </div>
+          <!-- All vehicle pricing records -->
+          <div class="card">
+            <div class="card-title"><i class="fas fa-list"></i>All Vehicles with Custom Pricing</div>
+            <div id="vpAllRecords"><p style="color:rgba(255,255,255,0.35);font-size:0.85rem">Loading...</p></div>
+          </div>
+        </div>
+
+        <!-- VEHICLE TYPE DEFAULTS -->
+        <div id="vtTypePane" style="display:none">
+          <div class="card">
+            <div class="card-title"><i class="fas fa-layer-group"></i>Default Pricing by Vehicle Type</div>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1rem">These are the base prices for each vehicle type. Individual vehicles can override these in the Per Vehicle tab.</p>
+            <div class="form-group"><label class="form-label">Vehicle Type</label>
+              <select class="form-input" id="typePricingVt" onchange="loadTypePricing()" style="max-width:260px">
+                <option value="">Loading...</option>
+              </select>
+            </div>
+            <div id="typePricingForm"></div>
+            <div style="display:flex;gap:10px;margin-top:1rem;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="saveTypePricing()"><i class="fas fa-save"></i> Save Type Defaults</button>
+              <button class="btn btn-secondary btn-sm" onclick="initTypePricing()"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUSINESS PRICING -->
+      <div id="bizPricingSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-briefcase"></i>Business Service Pricing</div>
+          <div id="bizPricingForm"></div>
+          <button class="btn btn-primary" style="margin-top:1rem" onclick="saveBizPricing()"><i class="fas fa-save"></i> Save Business Pricing</button>
+        </div>
+      </div>
+
+      <!-- FINE TYPES MANAGEMENT -->
+      <div id="fineTypesSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-gavel"></i>Fine Types Management</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.2rem">Add, edit or delete fine types used when setting fines for users. These appear as options when admin sets a fine.</p>
+          <!-- Add new fine type -->
+          <div style="background:#080d18;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border:1px solid #1e3355">
+            <div class="card-title" style="font-size:0.9rem;margin-bottom:0.8rem"><i class="fas fa-plus-circle" style="color:#27ae60"></i> Add New Fine Type</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Fine Type Name</label>
+                <input type="text" class="form-input" id="newFtName" placeholder="e.g. Speeding">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">Default Fine Amount (MVR)</label>
+                <input type="number" class="form-input" id="newFtFee" placeholder="500">
+              </div>
+              <button class="btn btn-success" onclick="addFineType()" style="height:40px"><i class="fas fa-plus"></i> Add</button>
+            </div>
+          </div>
+          <!-- Fine types list -->
+          <div class="card-title" style="font-size:0.9rem;margin-bottom:0.8rem"><i class="fas fa-list"></i> Current Fine Types</div>
+          <div id="fineTypesList">
+            <p style="color:rgba(255,255,255,0.35);font-size:0.85rem">Loading...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- BANK DETAILS -->
+      <div id="bankSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-university"></i>Bank Details</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.2rem"><i class="fas fa-info-circle" style="color:#3498db"></i> These details are shown to all users in payment screens. Saving updates immediately.</p>
+          <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-input" id="bkName"></div>
+          <div class="form-group"><label class="form-label">Account Name</label><input type="text" class="form-input" id="bkAccName"></div>
+          <div class="form-group"><label class="form-label">Account Number</label><input type="text" class="form-input" id="bkAccNum"></div>
+          <div class="form-group"><label class="form-label">Branch</label><input type="text" class="form-input" id="bkBranch"></div>
+          <div class="form-group"><label class="form-label">SWIFT Code</label><input type="text" class="form-input" id="bkSwift"></div>
+          <button class="btn btn-primary" onclick="saveBankDetails()"><i class="fas fa-save"></i> Save &amp; Update All Users</button>
+          <div class="bank-display" id="bankPreview" style="display:none"><p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-bottom:8px"><i class="fas fa-eye"></i> LIVE PREVIEW</p><div id="bankPreviewContent"></div></div>
+        </div>
+      </div>
+
+      <!-- UPLOAD TO USERS -->
+      <div id="uploadsSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-cloud-upload-alt"></i>Upload Document to User</div>
+          <div class="form-group"><label class="form-label">Select User</label><select class="form-input" id="uploadUid" style="max-width:380px"><option value="">Select...</option></select></div>
+          <div class="form-group"><label class="form-label">Document Name / Title</label><input type="text" class="form-input" id="uploadDocName" placeholder="e.g. Approved Sticker Certificate"></div>
+          <div class="upload-zone" id="adminUploadZone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Click or drag to upload <strong style="color:#e74c3c">image or document</strong></p>
+            <p style="font-size:0.75rem;margin-top:4px">JPG, PNG, PDF accepted</p>
+            <input type="file" id="uploadFile" accept=".jpg,.jpeg,.png,.pdf" onchange="handleAdminFile(this)">
+          </div>
+          <div id="uploadPreview"></div>
+          <button class="btn btn-primary" style="margin-top:1rem" onclick="doAdminUpload()"><i class="fas fa-upload"></i> Upload &amp; Notify User</button>
+        </div>
+        <div class="card"><div class="card-title"><i class="fas fa-history"></i>Recent Uploads</div><div id="recentUploads"></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VEHICLE MODAL -->
+<div class="modal-overlay" id="vehModal">
+  <div class="modal-content">
+    <div class="modal-header"><div class="modal-title" id="vehModalTitle">Vehicle Details</div><button class="close-btn" onclick="closeModal('vehModal')">&times;</button></div>
+    <div id="vehModalBody"></div>
+  </div>
+</div>
+
+<!-- SERVICE MODAL -->
+<div class="modal-overlay" id="svcModal">
+  <div class="modal-content" style="max-width:700px">
+    <div class="modal-header"><div class="modal-title" id="svcModalTitle">Service Request</div><button class="close-btn" onclick="closeModal('svcModal')">&times;</button></div>
+    <div id="svcModalBody"></div>
+  </div>
+</div>
+
+<!-- FINE MODAL -->
+<div class="modal-overlay" id="fineModal">
+  <div class="modal-content">
+    <div class="modal-header"><div class="modal-title">Fine Request</div><button class="close-btn" onclick="closeModal('fineModal')">&times;</button></div>
+    <div id="fineModalBody"></div>
+  </div>
+</div>
+
+<!-- BIZ MODAL -->
+<div class="modal-overlay" id="bizModal">
+  <div class="modal-content" style="max-width:700px">
+    <div class="modal-header"><div class="modal-title" id="bizModalTitle">Business Request</div><button class="close-btn" onclick="closeModal('bizModal')">&times;</button></div>
+    <div id="bizModalBody"></div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal-content">
+    <div class="modal-header"><div class="modal-title" id="userModalTitle">User Details</div><button class="close-btn" onclick="closeModal('userModal')">&times;</button></div>
+    <div id="userModalBody"></div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM DIALOG -->
+<div class="del-confirm-overlay" id="delConfirmOverlay">
+  <div class="del-confirm-box">
+    <div class="del-confirm-icon"><i class="fas fa-trash-alt"></i></div>
+    <h3 style="margin-bottom:0.5rem;font-size:1.1rem" id="delConfirmTitle">Delete Record?</h3>
+    <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:1.5rem" id="delConfirmMsg">This action cannot be undone.</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-secondary" onclick="closeDelConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="delConfirmBtn"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLB()">
+  <button class="lb-close" onclick="closeLB()"><i class="fas fa-times"></i></button>
+  <img id="lbImg" src="" alt="">
+</div>
+
+<script>
+const FC={apiKey:"AIzaSyA-di-_1PsrdRH_CiQCLsN4pLH-ERQxje4",authDomain:"autoease-f84b5.firebaseapp.com",databaseURL:"https://autoease-f84b5-default-rtdb.firebaseio.com",projectId:"autoease-f84b5",storageBucket:"autoease-f84b5.firebasestorage.app",messagingSenderId:"547912368245",appId:"1:547912368245:web:692e246c18ddcb2607783c"};
+if(!firebase.apps.length)firebase.initializeApp(FC);
+const db=firebase.database(),storage=firebase.storage();
+
+const ADMIN={u:'admin',p:'8555'};
+let allVeh=[],allSvc=[],allFine=[],allBiz=[],allUsers=[];
+let vehFilter='pending',svcFilter='pending',fineFilter='pending_review',bizFilter='pending';
+let aUpFile=null,svcs={};
+let currentBankDetails={};
+let dynamicFineTypes=[];
+
+const BIZ_NAMES={register_business:'Register Business',register_name:'Register Name',renew_name:'Renew Name',business_license:'Business License',update_info:'Update Business Info',dissolve_business:'Dissolve / Close Business'};
+
+// ===== DELETE CONFIRM =====
+let _pendingDelete=null;
+function showDelConfirm(title,msg,onConfirm){
+  document.getElementById('delConfirmTitle').innerText=title;
+  document.getElementById('delConfirmMsg').innerText=msg||'This action cannot be undone.';
+  document.getElementById('delConfirmBtn').onclick=()=>{closeDelConfirm();onConfirm()};
+  document.getElementById('delConfirmOverlay').style.display='flex';
+}
+function closeDelConfirm(){document.getElementById('delConfirmOverlay').style.display='none'}
+
+// ===== NOTIFICATION SYSTEM =====
+async function sendUserNotification(userId,type,title,message,extra={}){
+  try{
+    let notifId='notif_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+    await db.ref(`user_notifications/${userId}/${notifId}`).set({type,title,message,read:false,createdAt:Date.now(),...extra});
+  }catch(e){console.error('Notif error',e)}
+}
+
+// ===== LOGIN =====
+function doLogin(){
+  let u=document.getElementById('aUser').value,p=document.getElementById('aPass').value;
+  if(u===ADMIN.u&&p===ADMIN.p){document.getElementById('aLogin').style.display='none';document.getElementById('aDash').style.display='flex';localStorage.setItem('ra_admin','1');initAdmin()}
+  else{let e=document.getElementById('loginErr');e.style.display='block';e.innerText='Invalid credentials'}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('aLogin').style.display!=='none')doLogin()});
+function doLogout(){localStorage.removeItem('ra_admin');location.reload()}
+window.onload=()=>{if(localStorage.getItem('ra_admin')==='1'){document.getElementById('aLogin').style.display='none';document.getElementById('aDash').style.display='flex';initAdmin()}};
+
+async function initAdmin(){
+  await loadSvcsData();
+  await loadFineTypesData();
+  loadDashboard();loadBankDetails();initVpPricing();loadBizPricing();loadUserList();
+  listenBankDetails();
+  initMobileUI();
+}
+
+function initMobileUI(){
+  // Show close btn in sidebar only on mobile
+  let cb=document.getElementById('sbCloseBtn');
+  if(cb){
+    function checkMob(){cb.style.display=window.innerWidth<=768?'block':'none';}
+    checkMob();window.addEventListener('resize',checkMob);
+  }
+  // Sync bottom nav badges
+  setMobNav('dashboard');
+  syncMobBadges();
+}
+function listenBankDetails(){db.ref('bank_details').on('value',snap=>{if(snap.exists()){currentBankDetails=snap.val();renderDashBankDisplay()}})}
+function renderDashBankDisplay(){
+  let d=currentBankDetails,div=document.getElementById('dashBankDisplay');if(!div)return;
+  div.innerHTML=`<div class="bank-display"><div class="bank-display-row"><span class="bank-display-label">Bank Name</span><span class="bank-display-value">${d.bankName||'—'}</span></div><div class="bank-display-row"><span class="bank-display-label">Account Name</span><span class="bank-display-value">${d.accountName||'—'}</span></div><div class="bank-display-row"><span class="bank-display-label">Account Number</span><span class="bank-display-value">${d.accountNumber||'—'}</span></div><div class="bank-display-row"><span class="bank-display-label">Branch</span><span class="bank-display-value">${d.branch||'—'}</span></div></div>`;
+}
+async function loadSvcsData(){let snap=await db.ref('services').once('value');if(snap.exists())svcs=snap.val()}
+
+// ===== FINE TYPES — DYNAMIC =====
+async function loadFineTypesData(){
+  let snap=await db.ref('fine_types').once('value');
+  if(snap.exists()){
+    dynamicFineTypes=[];
+    snap.forEach(c=>{dynamicFineTypes.push({id:c.key,...c.val()})});
+  } else {
+    // Seed defaults on first load
+    let defaults=[{name:'Speeding',fee:500},{name:'No Helmet',fee:200},{name:'No License',fee:1000},{name:'Illegal Parking',fee:300},{name:'No Insurance',fee:800},{name:'Reckless Driving',fee:750},{name:'Other',fee:0}];
+    for(let d of defaults){let ref=await db.ref('fine_types').push({name:d.name,fee:d.fee,createdAt:Date.now()});dynamicFineTypes.push({id:ref.key,name:d.name,fee:d.fee})}
+  }
+}
+
+async function loadFineTypes(){
+  await loadFineTypesData();
+  renderFineTypesList();
+}
+
+function renderFineTypesList(){
+  let div=document.getElementById('fineTypesList');if(!div)return;
+  if(!dynamicFineTypes.length){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No fine types. Add one above.</p>';return}
+  div.innerHTML=`<div class="table-wrap"><table style="min-width:400px"><thead><tr><th>#</th><th>Fine Type Name</th><th>Default Amount (MVR)</th><th>Action</th></tr></thead><tbody>
+  ${dynamicFineTypes.map((ft,i)=>`<tr id="ftrow_${ft.id}">
+    <td style="color:rgba(255,255,255,0.4);font-size:0.8rem">${i+1}</td>
+    <td><input type="text" class="form-input" id="ftname_${ft.id}" value="${ft.name}" style="max-width:220px"></td>
+    <td><div style="display:flex;align-items:center;gap:6px"><span style="color:rgba(255,255,255,0.5)">MVR</span><input type="number" class="form-input" id="ftfee_${ft.id}" value="${ft.fee||0}" style="max-width:100px"></div></td>
+    <td><div style="display:flex;gap:6px">
+      <button class="btn btn-success btn-xs" onclick="saveFineType('${ft.id}')"><i class="fas fa-save"></i> Save</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteFineType('${ft.id}','${ft.name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('')}</tbody></table></div>`;
+}
+
+async function addFineType(){
+  let name=document.getElementById('newFtName').value.trim();
+  let fee=parseInt(document.getElementById('newFtFee').value)||0;
+  if(!name){notify('Enter fine type name','error');return}
+  let ref=await db.ref('fine_types').push({name,fee,createdAt:Date.now()});
+  dynamicFineTypes.push({id:ref.key,name,fee});
+  document.getElementById('newFtName').value='';document.getElementById('newFtFee').value='';
+  renderFineTypesList();notify('Fine type added!');
+}
+
+async function saveFineType(id){
+  let name=document.getElementById(`ftname_${id}`)?.value.trim();
+  let fee=parseInt(document.getElementById(`ftfee_${id}`)?.value)||0;
+  if(!name){notify('Name cannot be empty','error');return}
+  await db.ref(`fine_types/${id}`).update({name,fee,updatedAt:Date.now()});
+  let ft=dynamicFineTypes.find(x=>x.id===id);if(ft){ft.name=name;ft.fee=fee}
+  notify('Fine type saved!');
+}
+
+function deleteFineType(id,name){
+  showDelConfirm(`Delete Fine Type?`,`"${name}" will be removed from fine type options.`,async()=>{
+    await db.ref(`fine_types/${id}`).remove();
+    dynamicFineTypes=dynamicFineTypes.filter(x=>x.id!==id);
+    renderFineTypesList();notify('Fine type deleted');
+  });
+}
+
+// ===== HELPERS =====
+function notify(msg,type='success'){let n=document.createElement('div');n.className=`notif ${type}`;n.innerText=msg;document.body.appendChild(n);setTimeout(()=>n.remove(),3500)}
+function openModal(id){document.getElementById(id).style.display='flex';document.body.style.overflow='hidden'}
+function closeModal(id){document.getElementById(id).style.display='none';if(!document.querySelector('.modal-overlay[style*="flex"]'))document.body.style.overflow=''}
+window.openLB=src=>{document.getElementById('lbImg').src=src;document.getElementById('lightbox').classList.add('show')};
+window.closeLB=()=>document.getElementById('lightbox').classList.remove('show');
+function toggleSb(){
+  let sb=document.getElementById('sidebar'),ov=document.getElementById('sbOverlay'),cb=document.getElementById('sbCloseBtn');
+  let opening=!sb.classList.contains('mob-open');
+  sb.classList.toggle('mob-open');
+  if(ov){if(opening){ov.classList.add('show')}else{ov.classList.remove('show')}}
+  if(cb)cb.style.display=opening?'block':'none';
+}
+function setMobNav(name){
+  document.querySelectorAll('.mob-nav-item').forEach(i=>i.classList.remove('active'));
+  let el=document.getElementById('mbn_'+name);
+  if(el)el.classList.add('active');
+  // Also update badge mirrors
+  let vb=document.getElementById('vBadge'),svb=document.getElementById('sBadge'),fb=document.getElementById('fBadge');
+  let mvb=document.getElementById('mvBadge'),msb=document.getElementById('msBadge'),mfb=document.getElementById('mfBadge');
+  if(vb&&mvb)mvb.innerText=vb.innerText;
+  if(svb&&msb)msb.innerText=svb.innerText;
+  if(fb&&mfb)mfb.innerText=fb.innerText;
+}
+function badge(status,paid){
+  if(paid)return`<span class="badge b-paid">Paid</span>`;
+  if(status==='payment_submitted')return`<span class="badge b-payment_submitted">Payment Submitted</span>`;
+  let cls=status==='approved'||status==='verified'?'b-approved':status==='rejected'?'b-rejected':status==='in_progress'?'b-in_progress':'b-pending';
+  return`<span class="badge ${cls}">${status||'pending'}</span>`;
+}
+function fmtDate(ts){return ts?new Date(ts).toLocaleDateString('en-GB'):'—'}
+function fmtSize(bytes){if(!bytes)return'';if(bytes<1024)return bytes+'B';if(bytes<1048576)return(bytes/1024).toFixed(1)+'KB';return(bytes/1048576).toFixed(1)+'MB'}
+function isImgUrl(url){return/(jpg|jpeg|png|gif|webp)/i.test(decodeURIComponent(url.split('?')[0]))}
+function docGallery(docs,extra=''){
+  if(!docs||!Object.keys(docs).length)return extra?`<div style="color:rgba(255,255,255,0.35);font-size:0.8rem">No documents</div>`:'';
+  let h='<div class="doc-gallery">';
+  Object.keys(docs).forEach(k=>{let u=docs[k];if(!u||!u.startsWith)return;let img=isImgUrl(u);h+=`<div class="doc-thumb">${img?`<img src="${u}" onclick="openLB('${u}')" alt="${k}">`:`<div class="fi" onclick="window.open('${u}')"><i class="fas fa-file-pdf"></i><span>${k.substring(0,14)}</span></div>`}</div>`});
+  h+='</div>';return h;
+}
+
+function goSection(name,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById(name+'Section').classList.add('active');
+  if(el)el.classList.add('active');
+  else document.querySelectorAll('.nav-item').forEach(it=>{if(it.getAttribute('onclick')?.includes(`'${name}'`))it.classList.add('active')});
+  let title=el?.querySelector('span')?.innerText||name;
+  document.getElementById('pageTitle').innerText=title;
+  // Close sidebar on mobile
+  let sb=document.getElementById('sidebar'),ov=document.getElementById('sbOverlay'),cb=document.getElementById('sbCloseBtn');
+  if(sb)sb.classList.remove('mob-open');
+  if(ov)ov.classList.remove('show');
+  if(cb)cb.style.display='none';
+  // Scroll to top
+  window.scrollTo(0,0);
+  let mc=document.getElementById('mainArea');if(mc)mc.scrollTop=0;
+  // Sync mob bottom nav
+  let mobSections=['dashboard','vehicles','serviceReqs','fineReqs','bizReqs'];
+  if(mobSections.includes(name))setMobNav(name);
+  else setMobNav('more');
+  if(name==='vehicles')loadVehicles();
+  else if(name==='serviceReqs')loadSvcReqs();
+  else if(name==='fineReqs')loadFineReqs();
+  else if(name==='bizReqs')loadBizReqs();
+  else if(name==='users')loadUsers();
+  else if(name==='revenue'){loadRevenue();}
+  else if(name==='customPricing'){initCustomPricing();}
+  else if(name==='allDocs')initAllDocs();
+  else if(name==='typePricing'){document.getElementById('vtVehiclePane').style.display='block';document.getElementById('vtTypePane').style.display='none';document.getElementById('vtTab1').classList.add('active');document.getElementById('vtTab2').classList.remove('active');initVpPricing();}
+  else if(name==='bizPricing')loadBizPricing();
+  else if(name==='fineTypes')loadFineTypes();
+  else if(name==='bank')loadBankDetails();
+  else if(name==='uploads'){loadUserList();loadRecentUploads()}
+}
+
+// ===== PROGRESS PANEL =====
+function buildProgressPanel(currentProg,reqId,type){
+  let steps=[
+    {pct:25,label:'Submitted',icon:'fa-paper-plane',color:'#3498db'},
+    {pct:50,label:'Payment OK',icon:'fa-check-circle',color:'#f39c12'},
+    {pct:75,label:'Processing',icon:'fa-cogs',color:'#9b59b6'},
+    {pct:100,label:'Completed',icon:'fa-flag-checkered',color:'#27ae60'}
+  ];
+  let grid=steps.map(s=>`<div class="prog-step-btn ${currentProg>=s.pct?'selected':''}" onclick="selectProgress(this,${s.pct},'${reqId}','${type}')" data-pct="${s.pct}">
+    <span class="pct">${s.pct}%</span><i class="fas ${s.icon}" style="color:${s.color};font-size:1rem;margin-bottom:3px;display:block"></i><span class="plabel">${s.label}</span>
+  </div>`).join('');
+  return`<div class="progress-quick-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="color:rgba(255,255,255,0.6);font-size:0.82rem;font-weight:600"><i class="fas fa-tasks" style="color:#e74c3c;margin-right:5px"></i>Progress Update</span>
+      <span id="progPct_${reqId}" style="color:#27ae60;font-weight:700;font-size:1rem">${currentProg}%</span>
+    </div>
+    <div class="prog-bar-preview"><div class="prog-bar-fill" id="progBar_${reqId}" style="width:${currentProg}%"></div></div>
+    <div class="prog-steps-grid">${grid}</div>
+  </div>`;
+}
+let _selectedProg={};
+window.selectProgress=function(el,pct,reqId,type){
+  el.closest('.progress-quick-panel').querySelectorAll('.prog-step-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');_selectedProg[reqId]=pct;
+  let bar=document.getElementById(`progBar_${reqId}`),pctEl=document.getElementById(`progPct_${reqId}`);
+  if(bar)bar.style.width=pct+'%';if(pctEl)pctEl.innerText=pct+'%';
+};
+
+// ===== STICKER UPLOAD PANEL =====
+let _svcUploadFile={};
+function buildStickerUploadPanel(reqId,existingUrl){
+  let preview='';
+  if(existingUrl){
+    let img=isImgUrl(existingUrl);
+    preview=img
+      ?`<div class="sticker-complete-card"><div class="sticker-header"><div class="sticker-icon"><i class="fas fa-tag"></i></div><div><div style="font-weight:700;color:#27ae60">Sticker Uploaded</div></div></div><img class="sticker-preview-img" src="${existingUrl}" onclick="openLB('${existingUrl}')"><a href="${existingUrl}" download target="_blank" class="btn btn-success btn-sm" style="margin-top:6px"><i class="fas fa-download"></i> Download</a></div>`
+      :`<div class="sticker-preview-doc"><div style="width:48px;height:48px;border-radius:10px;background:rgba(52,152,219,0.15);display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#3498db;flex-shrink:0"><i class="fas fa-file-pdf"></i></div><div style="flex:1"><div style="font-weight:600">Document Uploaded</div></div><a href="${existingUrl}" download target="_blank" class="btn btn-success btn-sm"><i class="fas fa-download"></i></a></div>`;
+  }
+  return`<div style="margin:1rem 0">
+    <label class="form-label"><i class="fas fa-tag" style="color:#f39c12;margin-right:5px"></i>Upload Sticker / Document</label>
+    ${preview}
+    <div class="upload-zone" id="stickerZone_${reqId}">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <p>${existingUrl?'Replace':'Upload sticker or certificate'}</p>
+      <p style="font-size:0.75rem;margin-top:4px">JPG, PNG, PDF</p>
+      <input type="file" accept=".jpg,.jpeg,.png,.pdf" onchange="handleStickerFile('${reqId}',this)" onclick="event.stopPropagation()">
+    </div>
+    <div id="stickerFilePreview_${reqId}"></div>
+  </div>`;
+}
+window.handleStickerFile=function(reqId,input){
+  let f=input.files[0];if(!f)return;_svcUploadFile[reqId]=f;
+  let prev=document.getElementById(`stickerFilePreview_${reqId}`);if(!prev)return;
+  if(f.type.startsWith('image/')){let r=new FileReader();r.onload=e=>{prev.innerHTML=`<div class="upload-preview-box"><img src="${e.target.result}"><div class="upload-preview-info"><div class="fname">${f.name}</div><div class="fsize">${fmtSize(f.size)}</div></div><button class="upload-remove" onclick="_svcUploadFile['${reqId}']=null;document.getElementById('stickerFilePreview_${reqId}').innerHTML=''"><i class="fas fa-times"></i></button></div>`};r.readAsDataURL(f)}
+  else{prev.innerHTML=`<div class="upload-preview-box"><div class="doc-icon-big"><i class="fas fa-file-pdf"></i></div><div class="upload-preview-info"><div class="fname">${f.name}</div><div class="fsize">${fmtSize(f.size)}</div></div><button class="upload-remove" onclick="_svcUploadFile['${reqId}']=null;document.getElementById('stickerFilePreview_${reqId}').innerHTML=''"><i class="fas fa-times"></i></button></div>`}
+};
+
+// ===== DASHBOARD =====
+async function loadDashboard(){
+  let [v,s,f,b,u]=await Promise.all([
+    db.ref('vehicle_verifications').orderByChild('status').equalTo('pending').once('value'),
+    db.ref('service_requests').orderByChild('status').equalTo('pending').once('value'),
+    db.ref('fine_requests').orderByChild('status').equalTo('pending_review').once('value'),
+    db.ref('business_requests').orderByChild('status').equalTo('pending').once('value'),
+    db.ref('users').once('value')
+  ]);
+  let vc=v.numChildren()||0,sc=s.numChildren()||0,fc=f.numChildren()||0,bc=b.numChildren()||0,uc=u.numChildren()||0;
+  document.getElementById('stVeh').innerText=vc;document.getElementById('stSvc').innerText=sc;document.getElementById('stFine').innerText=fc;document.getElementById('stBiz').innerText=bc;document.getElementById('stUsers').innerText=uc;
+  document.getElementById('vBadge').innerText=vc;document.getElementById('sBadge').innerText=sc;document.getElementById('fBadge').innerText=fc;document.getElementById('bBadge').innerText=bc;
+  setTimeout(syncMobBadges,100);
+  // Revenue quick stats
+  try{
+    let now=new Date(),todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+    let monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+    let todayRev=0,monthRev=0;
+    let sSnap=await db.ref('service_requests').once('value');
+    if(sSnap.exists())sSnap.forEach(c=>{let r=c.val();if(!r.status||r.status==='rejected'||r.status==='pending')return;let amt=Number(r.totalAmount)||0,ts=r.approvedAt||r.createdAt||0;if(ts>=monthStart)monthRev+=amt;if(ts>=todayStart)todayRev+=amt;});
+    let fSnap=await db.ref('fine_requests').once('value');
+    if(fSnap.exists())fSnap.forEach(c=>{let r=c.val();if(!r.paid&&r.status!=='payment_submitted')return;let amt=(Number(r.fineDetails?.fineAmount)||0)+(Number(r.fineDetails?.serviceFee)||0),ts=r.paidAt||r.setAt||0;if(ts>=monthStart)monthRev+=amt;if(ts>=todayStart)todayRev+=amt;});
+    let elT=document.getElementById('stTodayRev'),elM=document.getElementById('stMonthRev');
+    if(elT)elT.innerText='MVR '+todayRev.toLocaleString();
+    if(elM)elM.innerText='MVR '+monthRev.toLocaleString();
+  }catch(e){console.warn('rev err',e)}
+  // Recent activity
+  let div=document.getElementById('recentAct');div.innerHTML='';
+  let reqs=[];
+  let sr=await db.ref('service_requests').limitToLast(6).once('value');if(sr.exists())sr.forEach(c=>{let r=c.val();reqs.push({icon:'fa-concierge-bell',name:r.serviceName,user:r.userName,status:r.status,date:r.createdAt})});
+  let br=await db.ref('business_requests').limitToLast(6).once('value');if(br.exists())br.forEach(c=>{let r=c.val();reqs.push({icon:'fa-briefcase',name:r.serviceName,user:r.userName,status:r.status,date:r.createdAt})});
+  reqs.sort((a,b)=>b.date-a.date);
+  div.innerHTML=reqs.slice(0,8).map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #1a2640"><div style="display:flex;align-items:center;gap:8px"><i class="fas ${r.icon}" style="color:#e74c3c;width:16px"></i><span style="font-size:0.87rem">${r.name}</span><span style="color:rgba(255,255,255,0.35);font-size:0.78rem">by ${r.user}</span></div>${badge(r.status)}</div>`).join('')||'<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No activity</p>';
+}
+
+
+
+// ===== VEHICLES =====
+async function loadVehicles(){let snap=await db.ref('vehicle_verifications').once('value');allVeh=[];if(snap.exists())snap.forEach(c=>{let r=c.val();r.id=c.key;allVeh.push(r)});allVeh.sort((a,b)=>b.requestedAt-a.requestedAt);renderVeh()}
+function filterVeh(f,el){vehFilter=f;document.querySelectorAll('#vehiclesSection .tab-btn').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderVeh()}
+function renderVeh(){
+  let q=document.getElementById('vehQ').value.toLowerCase();
+  let list=allVeh.filter(v=>(vehFilter==='all'||v.status===vehFilter)&&(!q||v.vehicleNumber?.toLowerCase().includes(q)||v.vehicleModel?.toLowerCase().includes(q)||v.userName?.toLowerCase().includes(q)));
+  document.getElementById('vehBody').innerHTML=list.map(v=>`<tr>
+    <td><strong>${v.vehicleNumber}</strong><br><span style="color:rgba(255,255,255,0.4);font-size:0.78rem">${v.vehicleModel||''}</span></td>
+    <td>${v.vehicleType||''}</td>
+    <td>${v.userName||''}<br><span style="color:rgba(255,255,255,0.35);font-size:0.75rem">${v.userEmail||''}</span></td>
+    <td><button class="btn btn-info btn-xs" onclick='viewVehDocs(${JSON.stringify(v.documents||{})})'>Docs</button></td>
+    <td>${badge(v.status)}</td>
+    <td style="font-size:0.78rem">${fmtDate(v.requestedAt)}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button class="btn btn-info btn-xs" onclick="openVehModal('${v.id}')"><i class="fas fa-eye"></i></button>
+      ${v.status==='pending'?`<button class="btn btn-success btn-xs" onclick="approveVeh('${v.id}','${v.userId}')"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-xs" onclick="rejectVeh('${v.id}','${v.userId}')"><i class="fas fa-times"></i></button>`:''}
+      <button class="btn btn-danger btn-xs" onclick="deleteRecord('vehicle_verifications','${v.id}','Vehicle ${v.vehicleNumber}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('')||`<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</td></tr>`;
+  renderMobVeh(list);
+}
+window.viewVehDocs=function(docs){let html=docGallery(docs);if(!html)html='<p style="color:rgba(255,255,255,0.4)">No documents</p>';let w=window.open('','_blank','width=600,height=500');w.document.write(`<html><body style="background:#0a0f1e;padding:1rem">${html}</body></html>`)};
+async function openVehModal(id){
+  let v=allVeh.find(x=>x.id===id);if(!v)return;
+  document.getElementById('vehModalTitle').innerText=`${v.vehicleNumber} – ${v.vehicleModel||''}`;
+  document.getElementById('vehModalBody').innerHTML=`
+    <div class="info-row"><span class="info-label">Owner</span><span class="info-value">${v.userName||'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-value">${v.userEmail||'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Type</span><span class="info-value">${v.vehicleType||'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Status</span><span class="info-value">${badge(v.status)}</span></div>
+    <div class="info-row"><span class="info-label">Submitted</span><span class="info-value">${fmtDate(v.requestedAt)}</span></div>
+    <h4 style="margin:1rem 0 0.5rem;color:rgba(255,255,255,0.6);font-size:0.9rem">Documents</h4>${docGallery(v.documents,'show')}
+    ${v.status==='pending'?`<div style="display:flex;gap:8px;margin-top:1rem">
+      <button class="btn btn-success" onclick="approveVeh('${v.id}','${v.userId}',true)"><i class="fas fa-check"></i> Approve</button>
+      <button class="btn btn-danger" onclick="rejectVeh('${v.id}','${v.userId}',true)"><i class="fas fa-times"></i> Reject</button>
+    </div>`:''}`;
+  openModal('vehModal');
+}
+async function approveVeh(vid,uid,fromModal=false){
+  await db.ref(`vehicle_verifications/${vid}`).update({status:'verified',verifiedAt:Date.now()});
+  await db.ref(`users/${uid}/vehicles/${vid}`).update({verified:true,verificationStatus:'verified'});
+  await sendUserNotification(uid,'vehicle_verified','✅ Vehicle Verified','Your vehicle has been verified and is now ready for services.',{vehicleId:vid});
+  notify('Vehicle approved!');if(fromModal)closeModal('vehModal');loadVehicles();
+}
+async function rejectVeh(vid,uid,fromModal=false){
+  let reason=prompt('Reason (optional):');
+  await db.ref(`vehicle_verifications/${vid}`).update({status:'rejected',rejectedAt:Date.now(),reason:reason||''});
+  await db.ref(`users/${uid}/vehicles/${vid}`).update({verified:false,verificationStatus:'rejected'});
+  await sendUserNotification(uid,'vehicle_rejected','❌ Vehicle Rejected',`Your vehicle verification was rejected.${reason?' Reason: '+reason:''}`,{vehicleId:vid});
+  notify('Rejected','error');if(fromModal)closeModal('vehModal');loadVehicles();
+}
+
+// ===== GENERIC DELETE =====
+function deleteRecord(path,id,label){
+  showDelConfirm(`Delete ${label}?`,`This record will be permanently deleted.`,async()=>{
+    await db.ref(`${path}/${id}`).remove();
+    notify(`${label} deleted`);
+    if(path==='vehicle_verifications')loadVehicles();
+    else if(path==='service_requests')loadSvcReqs();
+    else if(path==='fine_requests')loadFineReqs();
+    else if(path==='business_requests')loadBizReqs();
+    else if(path==='users')loadUsers();
+  });
+}
+
+// ===== SERVICE REQUESTS =====
+async function loadSvcReqs(){let snap=await db.ref('service_requests').once('value');allSvc=[];if(snap.exists())snap.forEach(c=>{let r=c.val();r.id=c.key;allSvc.push(r)});allSvc.sort((a,b)=>b.createdAt-a.createdAt);renderSvc()}
+function filterSvc(f,el){svcFilter=f;document.querySelectorAll('#serviceReqsSection .tab-btn').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderSvc()}
+function renderSvc(){
+  let q=document.getElementById('svcQ').value.toLowerCase();
+  let list=allSvc.filter(r=>(svcFilter==='all'||r.status===svcFilter)&&(!q||r.serviceName?.toLowerCase().includes(q)||r.vehicleNumber?.toLowerCase().includes(q)||r.userName?.toLowerCase().includes(q)));
+  document.getElementById('svcBody').innerHTML=list.map(r=>`<tr>
+    <td><strong>${r.serviceName||''}</strong></td>
+    <td>${r.vehicleNumber||''}</td>
+    <td>${r.userName||''}<br><span style="color:rgba(255,255,255,0.35);font-size:0.75rem">${r.userEmail||''}</span></td>
+    <td style="color:#f39c12;font-weight:700">MVR ${r.totalAmount||0}</td>
+    <td>${badge(r.status)}</td>
+    <td><div class="mini-prog"><div class="mini-prog-fill" style="width:${r.progress||0}%"></div></div><span style="font-size:0.75rem;margin-left:4px">${r.progress||0}%</span></td>
+    <td style="font-size:0.78rem">${fmtDate(r.createdAt)}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button class="btn btn-info btn-xs" onclick="openSvcModal('${r.id}')"><i class="fas fa-eye"></i> Manage</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteRecord('service_requests','${r.id}','Service ${r.serviceName}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('')||`<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</td></tr>`;
+  renderMobSvc(list);
+}
+async function openSvcModal(id){
+  let r=allSvc.find(x=>x.id===id);if(!r)return;
+  let done=r.status==='approved'||r.status==='rejected';
+  document.getElementById('svcModalTitle').innerText=`${r.serviceName} – ${r.vehicleNumber}`;
+
+  // Build inline fee editor panel — shown for pending requests
+  let feePanel='';
+  if(!done){
+    let sa=r.serviceAmount||0,st=r.stickerAmount||0,tot=r.totalAmount||(sa+st);
+    feePanel=`
+    <div style="background:linear-gradient(135deg,#0d1f35,#0f2540);border:1px solid rgba(243,156,18,0.35);border-radius:16px;padding:1.2rem;margin:1rem 0">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:1rem">
+        <div style="width:38px;height:38px;border-radius:11px;background:rgba(243,156,18,0.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#f39c12;flex-shrink:0"><i class="fas fa-tag"></i></div>
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;color:#f39c12">Set Fee for This Vehicle</div>
+          <div style="font-size:0.73rem;color:rgba(255,255,255,0.45)">Override amounts — user will see updated total instantly</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end">
+        <div>
+          <label style="color:rgba(255,255,255,0.55);font-size:0.78rem;display:block;margin-bottom:4px;font-weight:600">Service Fee (MVR)</label>
+          <input type="number" id="feeEdit_sa_${id}" value="${sa}" min="0"
+            style="width:100%;padding:10px 12px;background:#080d18;border:1px solid rgba(243,156,18,0.4);border-radius:11px;color:#f39c12;font-size:1rem;font-weight:700;text-align:center"
+            oninput="recalcFeeTotal('${id}')">
+        </div>
+        <div>
+          <label style="color:rgba(255,255,255,0.55);font-size:0.78rem;display:block;margin-bottom:4px;font-weight:600">Sticker Fee (MVR)</label>
+          <input type="number" id="feeEdit_st_${id}" value="${st}" min="0"
+            style="width:100%;padding:10px 12px;background:#080d18;border:1px solid rgba(243,156,18,0.4);border-radius:11px;color:#f39c12;font-size:1rem;font-weight:700;text-align:center"
+            oninput="recalcFeeTotal('${id}')">
+        </div>
+        <div>
+          <label style="color:rgba(255,255,255,0.55);font-size:0.78rem;display:block;margin-bottom:4px;font-weight:600">Total (MVR)</label>
+          <div id="feeEdit_tot_${id}" style="padding:10px 12px;background:rgba(243,156,18,0.08);border:1px solid rgba(243,156,18,0.3);border-radius:11px;color:#f39c12;font-size:1.1rem;font-weight:800;text-align:center">MVR ${tot}</div>
+        </div>
+      </div>
+      <button class="btn btn-warning btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="saveSvcFees('${id}','${r.userId}','${(r.serviceName||'').replace(/'/g,"\\'")}')">
+        <i class="fas fa-save"></i> Update Fees — User Sees New Amount
+      </button>
+    </div>`;
+  }
+
+  let actionHtml='';
+  if(!done){
+    actionHtml=`${buildProgressPanel(r.progress||25,r.id,'service')}
+      ${buildStickerUploadPanel(r.id,r.documentURL||null)}
+      <div class="form-group" style="margin-top:1rem"><label class="form-label">Expiry Date <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">(optional)</span></label><input type="date" class="form-input" id="svcExpiry_${r.id}"></div>
+      <div class="form-group"><label class="form-label">Admin Note</label><input type="text" class="form-input" id="svcNote_${r.id}" placeholder="Note for user" value="${r.adminNote||''}"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem">
+        <button class="btn btn-warning" onclick="updateSvcProg('${r.id}','${r.userId}','${(r.serviceName||'').replace(/'/g,"\\'")}')"><i class="fas fa-tasks"></i> Save Progress</button>
+        <button class="btn btn-success" onclick="approveSvc('${r.id}','${r.userId}','${(r.serviceName||'').replace(/'/g,"\\'")}')"><i class="fas fa-check"></i> Approve &amp; Notify</button>
+        <button class="btn btn-danger" onclick="rejectSvc('${r.id}','${r.userId}','${(r.serviceName||'').replace(/'/g,"\\'")}')"><i class="fas fa-times"></i> Reject</button>
+      </div>`;
+  } else {
+    actionHtml=`<div style="margin-top:1rem;padding:10px;background:rgba(255,255,255,0.04);border-radius:10px">
+      <p style="color:rgba(255,255,255,0.5);font-size:0.85rem">Request <strong>${r.status}</strong>.${r.adminNote?' Note: '+r.adminNote:''}</p>
+      ${r.documentURL?`<a href="${r.documentURL}" download target="_blank" class="btn btn-success btn-sm" style="margin-top:8px"><i class="fas fa-download"></i> Download Sticker</a>`:''}
+    </div>`;
+  }
+
+  document.getElementById('svcModalBody').innerHTML=`
+    <div class="info-row"><span class="info-label">User</span><span class="info-value">${r.userName}</span></div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-value">${r.userEmail}</span></div>
+    <div class="info-row"><span class="info-label">Vehicle</span><span class="info-value">${r.vehicleNumber} (${r.vehicleType||''})</span></div>
+    <div class="info-row"><span class="info-label">Service Fee</span><span class="info-value" id="dispSa_${r.id}">MVR ${r.serviceAmount||0}</span></div>
+    <div class="info-row"><span class="info-label">Sticker Fee</span><span class="info-value" id="dispSt_${r.id}">MVR ${r.stickerAmount||0}</span></div>
+    <div class="info-row"><span class="info-label">Total</span><span class="info-value" style="color:#f39c12;font-weight:700" id="dispTot_${r.id}">MVR ${r.totalAmount||0}</span></div>
+    <div class="info-row"><span class="info-label">Status</span><span class="info-value">${badge(r.status)}</span></div>
+    <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${r.progress||0}%</span></div>
+    ${r.invoiceNum?`<div class="info-row"><span class="info-label">Invoice No.</span><span class="info-value" style="color:#f39c12">${r.invoiceNum}</span></div>`:''}
+    <h4 style="margin:1rem 0 0.5rem;color:rgba(255,255,255,0.5);font-size:0.88rem">Documents &amp; Payment Slip</h4>
+    ${docGallery(r.documents,'show')}
+    ${r.paymentSlipUrl?`<div style="margin-top:8px"><p style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-bottom:4px">Payment Slip:</p>${docGallery({slip:r.paymentSlipUrl})}</div>`:''}
+    ${feePanel}
+    ${actionHtml}`;
+  openModal('svcModal');
+}
+
+// Live recalc total as admin types
+window.recalcFeeTotal=function(id){
+  let sa=parseFloat(document.getElementById(`feeEdit_sa_${id}`)?.value)||0;
+  let st=parseFloat(document.getElementById(`feeEdit_st_${id}`)?.value)||0;
+  let tot=sa+st;
+  let totEl=document.getElementById(`feeEdit_tot_${id}`);
+  if(totEl)totEl.innerText='MVR '+tot;
+};
+
+// Save updated fees to Firebase — user sees new amount immediately
+async function saveSvcFees(id,userId,serviceName){
+  let sa=parseFloat(document.getElementById(`feeEdit_sa_${id}`)?.value)||0;
+  let st=parseFloat(document.getElementById(`feeEdit_st_${id}`)?.value)||0;
+  let tot=sa+st;
+  await db.ref(`service_requests/${id}`).update({
+    serviceAmount:sa, stickerAmount:st, totalAmount:tot, feesUpdatedAt:Date.now(), feesUpdatedBy:'admin'
+  });
+  // Update display rows in modal
+  let dSa=document.getElementById(`dispSa_${id}`),dSt=document.getElementById(`dispSt_${id}`),dTot=document.getElementById(`dispTot_${id}`);
+  if(dSa)dSa.innerText='MVR '+sa;
+  if(dSt)dSt.innerText='MVR '+st;
+  if(dTot)dTot.innerText='MVR '+tot;
+  // Update in-memory list too
+  let rec=allSvc.find(x=>x.id===id);
+  if(rec){rec.serviceAmount=sa;rec.stickerAmount=st;rec.totalAmount=tot;}
+  // Notify user of updated fee
+  await sendUserNotification(userId,'service_update',
+    `💰 Fee Updated: ${serviceName}`,
+    `The fee for your ${serviceName} request has been updated to MVR ${tot} (Service: MVR ${sa}, Sticker: MVR ${st}).`,
+    {requestId:id,totalAmount:tot}
+  );
+  notify(`✅ Fees saved — MVR ${tot} total. User notified!`);
+  renderSvc();
+}
+async function updateSvcProg(id,userId,serviceName){
+  let prog=_selectedProg[id]!=null?_selectedProg[id]:null;
+  if(prog===null){notify('Select a progress step','error');return}
+  let note=document.getElementById(`svcNote_${id}`)?.value||'';
+  let updates={progress:prog,adminNote:note,updatedAt:Date.now()};
+  if(_svcUploadFile[id]){
+    notify('Uploading...','info');
+    try{let f=_svcUploadFile[id];let ref=storage.ref(`stickers/${id}/${Date.now()}_${f.name}`);await ref.put(f);updates.documentURL=await ref.getDownloadURL();_svcUploadFile[id]=null}
+    catch(e){notify('Upload failed','error');return}
+  }
+  await db.ref(`service_requests/${id}`).update(updates);
+  if(prog===100){
+    await sendUserNotification(userId,'progress_complete','🎉 Service Completed!',`Your ${serviceName} request is complete!${updates.documentURL?' Sticker ready to download.':''}`,{requestId:id,documentURL:updates.documentURL||null});
+    notify('100% — user notified!');
+  } else {
+    await sendUserNotification(userId,'service_update',`🔄 Service Update: ${serviceName}`,`Progress: ${prog}%.${note?' Note: '+note:''}`,{requestId:id,progress:prog});
+    notify('Progress updated!');
+  }
+  closeModal('svcModal');loadSvcReqs();
+}
+async function approveSvc(id,userId,serviceName){
+  let prog=_selectedProg[id]!=null?_selectedProg[id]:100;
+  let expiry=document.getElementById(`svcExpiry_${id}`)?.value;
+  let note=document.getElementById(`svcNote_${id}`)?.value||'';
+  let updates={status:'approved',approvedAt:Date.now(),progress:prog,adminNote:note};
+  if(expiry)updates.expiryDate=new Date(expiry).getTime();
+  if(_svcUploadFile[id]){
+    notify('Uploading sticker...','info');
+    try{let f=_svcUploadFile[id];let ref=storage.ref(`stickers/${id}/${Date.now()}_${f.name}`);await ref.put(f);updates.documentURL=await ref.getDownloadURL();_svcUploadFile[id]=null}
+    catch(e){notify('Upload failed','error');return}
+  }
+  await db.ref(`service_requests/${id}`).update(updates);
+  await sendUserNotification(userId,'progress_complete','🎉 Service Approved!',`Your ${serviceName} has been approved!${updates.documentURL?' Sticker ready.':''}${note?' Note: '+note:''}`,{requestId:id,documentURL:updates.documentURL||null});
+  notify('Approved & user notified!');closeModal('svcModal');loadSvcReqs();
+}
+async function rejectSvc(id,userId,serviceName){
+  let note=document.getElementById(`svcNote_${id}`)?.value||prompt('Reason:')||'';
+  await db.ref(`service_requests/${id}`).update({status:'rejected',rejectedAt:Date.now(),adminNote:note,progress:0});
+  await sendUserNotification(userId,'service_rejected','❌ Service Rejected',`Your ${serviceName} was rejected.${note?' Reason: '+note:''}`,{requestId:id});
+  notify('Rejected','error');closeModal('svcModal');loadSvcReqs();
+}
+
+// ===== FINE REQUESTS =====
+async function loadFineReqs(){let snap=await db.ref('fine_requests').once('value');allFine=[];if(snap.exists())snap.forEach(c=>{let r=c.val();r.id=c.key;allFine.push(r)});allFine.sort((a,b)=>b.createdAt-a.createdAt);renderFine()}
+function filterFine(f,el){fineFilter=f;document.querySelectorAll('#fineReqsSection .tab-btn').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderFine()}
+function renderFine(){
+  let q=document.getElementById('fineQ').value.toLowerCase();
+  let list=allFine.filter(r=>{let m=fineFilter==='all'||(fineFilter==='paid'?(r.paid||r.status==='payment_submitted'):r.status===fineFilter);return m&&(!q||r.vehicleNumber?.toLowerCase().includes(q)||r.userName?.toLowerCase().includes(q)||r.ownerId?.toLowerCase().includes(q))});
+  document.getElementById('fineBody').innerHTML=list.map(r=>`<tr>
+    <td><strong>${r.vehicleNumber||''}</strong></td>
+    <td>${r.ownerId||''}</td>
+    <td>${r.userName||''}<br><span style="color:rgba(255,255,255,0.35);font-size:0.75rem">${r.userEmail||''}</span></td>
+    <td>${badge(r.status)}</td>
+    <td>${r.fineDetails?`<span style="color:#f39c12;font-weight:700">MVR ${r.fineDetails.fineAmount+r.fineDetails.serviceFee}</span>`:'—'}</td>
+    <td>${(r.paid||r.status==='payment_submitted')?'<span style="color:#27ae60"><i class="fas fa-check-circle"></i> Yes</span>':'<span style="color:rgba(255,255,255,0.3)">No</span>'}</td>
+    <td style="font-size:0.78rem">${fmtDate(r.createdAt)}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button class="btn btn-info btn-xs" onclick="openFineModal('${r.id}')"><i class="fas fa-eye"></i> Manage</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteRecord('fine_requests','${r.id}','Fine ${r.vehicleNumber}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('')||`<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</td></tr>`;
+  renderMobFine(list);
+}
+async function openFineModal(id){
+  let r=allFine.find(x=>x.id===id);if(!r)return;
+  // Build dynamic fine type options
+  let fOpts=dynamicFineTypes.map(t=>`<option value="${t.name}" data-fee="${t.fee}">${t.name}${t.fee?' (MVR '+t.fee+')':''}</option>`).join('');
+  let isPaid=r.paid||r.status==='payment_submitted';
+  document.getElementById('fineModalBody').innerHTML=`
+    <div class="info-row"><span class="info-label">Vehicle</span><span class="info-value">${r.vehicleNumber}</span></div>
+    <div class="info-row"><span class="info-label">Owner ID</span><span class="info-value">${r.ownerId}</span></div>
+    <div class="info-row"><span class="info-label">User</span><span class="info-value">${r.userName}</span></div>
+    <div class="info-row"><span class="info-label">Contact</span><span class="info-value">${r.userContact||'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Status</span><span class="info-value">${badge(r.status)} ${isPaid?badge(null,true):''}</span></div>
+    ${r.notes?`<div class="info-row"><span class="info-label">Notes</span><span class="info-value">${r.notes}</span></div>`:''}
+    <h4 style="margin:1rem 0 0.5rem;color:rgba(255,255,255,0.5);font-size:0.88rem">Documents</h4>
+    ${r.documentUrl?docGallery({document:r.documentUrl}):'<p style="color:rgba(255,255,255,0.3);font-size:0.82rem">No document uploaded</p>'}
+    ${r.paymentSlip?`<h4 style="margin:0.8rem 0 0.4rem;color:rgba(255,255,255,0.5);font-size:0.88rem">Payment Slip</h4>${docGallery({slip:r.paymentSlip})}`:''}
+    ${r.fineDetails?`<div style="background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.25);border-radius:12px;padding:10px;margin:1rem 0">
+      <p style="color:#27ae60;font-size:0.82rem;font-weight:700;margin-bottom:6px"><i class="fas fa-gavel"></i> Fine Set</p>
+      <div class="info-row"><span class="info-label">Type</span><span class="info-value">${r.fineDetails.typeName}</span></div>
+      <div class="info-row"><span class="info-label">Fine Amount</span><span class="info-value">MVR ${r.fineDetails.fineAmount}</span></div>
+      <div class="info-row"><span class="info-label">Service Fee</span><span class="info-value">MVR ${r.fineDetails.serviceFee}</span></div>
+      <div class="info-row"><span class="info-label">Total</span><span class="info-value" style="color:#f39c12">MVR ${r.fineDetails.fineAmount+r.fineDetails.serviceFee}</span></div>
+    </div>`:`
+    <div style="margin-top:1rem;background:#080d18;border-radius:14px;padding:1.2rem;border:1px solid #1e3355">
+      <h4 style="margin-bottom:0.8rem;font-size:0.92rem"><i class="fas fa-gavel" style="color:#e67e22;margin-right:6px"></i>Set Fine Details</h4>
+      <div class="form-group"><label class="form-label">Fine Type</label><select class="form-input" id="ftType" onchange="onFineTypeChange()">${fOpts}</select></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Fine Amount (MVR)</label><input type="number" class="form-input" id="ftAmt" placeholder="500"></div>
+        <div class="form-group"><label class="form-label">Service Fee (MVR)</label><input type="number" class="form-input" id="ftSFee" value="50"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Fine Code</label><input type="text" class="form-input" id="ftCode" placeholder="MV-2025-0001"></div>
+        <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input" id="ftDue"></div>
+      </div>
+      <button class="btn btn-warning" onclick="setFine('${r.id}','${r.userId}')"><i class="fas fa-gavel"></i> Set Fine &amp; Notify User</button>
+    </div>`}
+    ${isPaid&&!r.paymentVerified?`
+    <!-- PAYMENT VERIFICATION PANEL WITH DOCUMENT UPLOAD -->
+    <div style="margin-top:1rem;background:linear-gradient(135deg,rgba(243,156,18,0.07),rgba(243,156,18,0.03));border:1px solid rgba(243,156,18,0.35);border-radius:16px;padding:1.2rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+        <div style="width:40px;height:40px;border-radius:12px;background:rgba(243,156,18,0.15);border:1px solid rgba(243,156,18,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-clock" style="color:#f39c12;font-size:1.1rem"></i></div>
+        <div><div style="color:#f39c12;font-weight:700;font-size:0.92rem">Payment Submitted — Awaiting Verification</div><div style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-top:2px">Verify payment and optionally upload a fine clearance document for the user</div></div>
+      </div>
+
+      <!-- Optional fine document upload -->
+      <div style="margin-bottom:1rem">
+        <label style="color:rgba(255,255,255,0.65);font-size:0.82rem;font-weight:600;display:block;margin-bottom:8px"><i class="fas fa-file-upload" style="color:#3498db;margin-right:5px"></i>Upload Fine Clearance Document <span style="color:rgba(255,255,255,0.35);font-weight:400">(optional — shown to user)</span></label>
+        <div class="upload-zone" id="fineDocUploadZone_${r.id}" style="padding:1rem">
+          <i class="fas fa-cloud-upload-alt" style="font-size:1.8rem;margin-bottom:6px"></i>
+          <p style="font-size:0.82rem">Click to upload clearance doc / receipt</p>
+          <p style="font-size:0.72rem;margin-top:3px;color:rgba(255,255,255,0.35)">JPG, PNG or PDF</p>
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFineVerifyDoc('${r.id}',this)" onclick="event.stopPropagation()">
+        </div>
+        <div id="fineDocUploadPreview_${r.id}"></div>
+      </div>
+
+      <button class="btn btn-success" style="width:100%;justify-content:center;padding:12px" onclick="verifyFinePay('${r.id}','${r.userId}')">
+        <i class="fas fa-check-circle"></i> Verify Payment &amp; Notify User (Fine Cleared)
+      </button>
+    </div>`:''}
+    ${isPaid&&r.paymentVerified?`
+    <!-- VERIFIED STATE -->
+    <div style="margin-top:1rem;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.35);border-radius:16px;padding:1.2rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${r.adminDocumentUrl?'1rem':'0'}">
+        <div style="width:40px;height:40px;border-radius:12px;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-check-circle" style="color:#27ae60;font-size:1.1rem"></i></div>
+        <div><div style="color:#27ae60;font-weight:700;font-size:0.92rem">✅ Payment Verified — Fine Cleared</div>${r.verifiedAt?`<div style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:2px">Verified on ${new Date(r.verifiedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>`:''}</div>
+      </div>
+      ${r.adminDocumentUrl?`
+      <div style="background:#080d18;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid rgba(39,174,96,0.25)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <i class="fas ${/(jpg|jpeg|png|gif|webp)/i.test(r.adminDocumentUrl)?'fa-image':'fa-file-pdf'}" style="color:${/(jpg|jpeg|png|gif|webp)/i.test(r.adminDocumentUrl)?'#27ae60':'#3498db'};font-size:1.2rem"></i>
+          <div><div style="color:white;font-size:0.85rem;font-weight:600">Clearance Document</div><div style="color:rgba(255,255,255,0.4);font-size:0.72rem">Sent to user</div></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="${/(jpg|jpeg|png|gif|webp)/i.test(r.adminDocumentUrl)?`openLB('${r.adminDocumentUrl}')`:`window.open('${r.adminDocumentUrl}')`}" class="btn btn-info btn-xs"><i class="fas fa-eye"></i> View</button>
+          <a href="${r.adminDocumentUrl}" download target="_blank" class="btn btn-success btn-xs"><i class="fas fa-download"></i></a>
+        </div>
+      </div>`:'<div style="color:rgba(255,255,255,0.35);font-size:0.78rem;margin-top:4px"><i class="fas fa-info-circle" style="margin-right:4px"></i>No clearance document was uploaded</div>'}
+    </div>`:''}`;
+  openModal('fineModal');
+  setTimeout(()=>onFineTypeChange(),50);
+}
+
+// Track fine verify doc per fine id
+let _fineVerifyDocs={};
+window.handleFineVerifyDoc=function(fineId,input){
+  let f=input.files[0];if(!f)return;
+  _fineVerifyDocs[fineId]=f;
+  let prev=document.getElementById(`fineDocUploadPreview_${fineId}`);if(!prev)return;
+  let isImg=f.type.startsWith('image/');
+  if(isImg){
+    let r=new FileReader();
+    r.onload=e=>{prev.innerHTML=`<div class="upload-preview-box" style="margin-top:8px"><img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;border-radius:10px"><div class="upload-preview-info"><div class="fname">${f.name}</div><div class="fsize">${fmtSize(f.size)}</div></div><button class="upload-remove" onclick="_fineVerifyDocs['${fineId}']=null;document.getElementById('fineDocUploadPreview_${fineId}').innerHTML=''"><i class="fas fa-times"></i></button></div>`};
+    r.readAsDataURL(f);
+  } else {
+    prev.innerHTML=`<div class="upload-preview-box" style="margin-top:8px"><div class="doc-icon-big"><i class="fas fa-file-pdf"></i></div><div class="upload-preview-info"><div class="fname">${f.name}</div><div class="fsize">${fmtSize(f.size)}</div></div><button class="upload-remove" onclick="_fineVerifyDocs['${fineId}']=null;document.getElementById('fineDocUploadPreview_${fineId}').innerHTML=''"><i class="fas fa-times"></i></button></div>`;
+  }
+};
+
+function onFineTypeChange(){let sel=document.getElementById('ftType');if(!sel)return;let opt=sel.options[sel.selectedIndex];document.getElementById('ftAmt').value=opt.dataset.fee||''}
+async function setFine(id,userId){
+  let tn=document.getElementById('ftType')?.value,fa=parseInt(document.getElementById('ftAmt')?.value),sf=parseInt(document.getElementById('ftSFee')?.value)||50,code=document.getElementById('ftCode')?.value,due=document.getElementById('ftDue')?.value;
+  if(!fa){notify('Enter fine amount','error');return}
+  await db.ref(`fine_requests/${id}`).update({status:'approved',fineDetails:{typeName:tn,fineAmount:fa,serviceFee:sf,code,dueDate:due?new Date(due).getTime():null},setAt:Date.now()});
+  await sendUserNotification(userId,'fine_set','⚠️ Fine Details Set',`A fine of MVR ${fa+sf} has been set for your vehicle. Type: ${tn}. Please pay to avoid penalties.`,{fineId:id,total:fa+sf});
+  notify('Fine set & user notified!');closeModal('fineModal');loadFineReqs();
+}
+
+async function verifyFinePay(id,userId){
+  let docFile=_fineVerifyDocs[id]||null;
+  let updates={paymentVerified:true,paid:true,status:'paid',verifiedAt:Date.now()};
+
+  // If admin uploaded a clearance doc, upload it first
+  if(docFile){
+    notify('Uploading clearance document...','info');
+    try{
+      let ref=storage.ref(`fine_docs/clearance/${id}/${Date.now()}_${docFile.name}`);
+      await ref.put(docFile);
+      let url=await ref.getDownloadURL();
+      updates.adminDocumentUrl=url;
+      delete _fineVerifyDocs[id];
+    }catch(e){notify('Document upload failed: '+e.message,'error');return}
+  }
+
+  await db.ref(`fine_requests/${id}`).update(updates);
+
+  // Send notification — include document URL if uploaded
+  await sendUserNotification(userId,'fine_paid',
+    '✅ Fine Payment Verified — Fine Cleared!',
+    'Your fine payment has been verified and your fine is now cleared. Thank you!'+(updates.adminDocumentUrl?' A clearance document has been uploaded for you.':''),
+    {fineId:id, documentURL:updates.adminDocumentUrl||null}
+  );
+
+  notify('Payment verified & user notified — fine cleared!');
+  closeModal('fineModal');
+  loadFineReqs();
+}
+
+// ===== BUSINESS REQUESTS =====
+async function loadBizReqs(){let snap=await db.ref('business_requests').once('value');allBiz=[];if(snap.exists())snap.forEach(c=>{let r=c.val();r.id=c.key;allBiz.push(r)});allBiz.sort((a,b)=>b.createdAt-a.createdAt);renderBiz()}
+function filterBiz(f,el){bizFilter=f;document.querySelectorAll('#bizReqsSection .tab-btn').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderBiz()}
+function renderBiz(){
+  let q=document.getElementById('bizQ').value.toLowerCase();
+  let list=allBiz.filter(r=>(bizFilter==='all'||r.status===bizFilter)&&(!q||r.serviceName?.toLowerCase().includes(q)||r.userName?.toLowerCase().includes(q)));
+  document.getElementById('bizBody').innerHTML=list.map(r=>`<tr>
+    <td><strong>${r.serviceName||''}</strong><br><span style="color:rgba(255,255,255,0.35);font-size:0.75rem">${r.serviceType||''}</span></td>
+    <td>${r.userName||''}<br><span style="color:rgba(255,255,255,0.35);font-size:0.75rem">${r.userEmail||''}</span></td>
+    <td><button class="btn btn-secondary btn-xs" onclick="showBizFields('${r.id}')">Fields</button></td>
+    <td><button class="btn btn-info btn-xs" onclick="showBizDocs('${r.id}')">Docs</button></td>
+    <td>${badge(r.status)}</td>
+    <td><div class="mini-prog"><div class="mini-prog-fill" style="width:${r.progress||0}%"></div></div> ${r.progress||0}%</td>
+    <td style="font-size:0.78rem">${fmtDate(r.createdAt)}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button class="btn btn-info btn-xs" onclick="openBizModal('${r.id}')"><i class="fas fa-eye"></i> Manage</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteRecord('business_requests','${r.id}','Business ${r.serviceName}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('')||`<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</td></tr>`;
+  renderMobBiz(list);
+}
+window.showBizFields=function(id){let r=allBiz.find(x=>x.id===id);if(!r||!r.fields)return;alert(Object.keys(r.fields).map(k=>`${k}: ${r.fields[k]}`).join('\n'))};
+window.showBizDocs=function(id){let r=allBiz.find(x=>x.id===id);if(!r||!r.documents)return notify('No documents','error');let html=docGallery(r.documents);let w=window.open('','_blank','width=700,height=500');w.document.write(`<html><body style="background:#0a0f1e;padding:1rem">${html}</body></html>`)};
+async function openBizModal(id){
+  let r=allBiz.find(x=>x.id===id);if(!r)return;
+  let done=r.status==='approved'||r.status==='rejected';
+  let fieldsHtml='';
+  if(r.fields){fieldsHtml='<div style="background:#080d18;border-radius:12px;padding:10px;margin-bottom:1rem">';Object.keys(r.fields).forEach(k=>{fieldsHtml+=`<div class="info-row"><span class="info-label" style="font-size:0.8rem">${k}</span><span class="info-value" style="font-size:0.85rem">${r.fields[k]}</span></div>`});fieldsHtml+='</div>'}
+  let actionHtml='';
+  if(!done){
+    actionHtml=`${buildProgressPanel(r.progress||20,r.id,'biz')}
+      ${buildStickerUploadPanel(r.id+'_biz',r.bizDocumentURL||null)}
+      <div class="form-group" style="margin-top:1rem"><label class="form-label">Admin Note</label><textarea class="form-input" id="bizNote_${r.id}" rows="3">${r.adminNote||''}</textarea></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem">
+        <button class="btn btn-warning" onclick="updateBizProg('${r.id}','${r.userId}','${(r.serviceName||'').replace(/'/g,"\\'")}')"><i class="fas fa-tasks"></i> Save Progress</button>
+        <button class="btn btn-success" onclick="approveBiz('${r.id}','${r.userId}','${(r.serviceName||'').replace(/'/g,"\\'")}')"><i class="fas fa-check"></i> Approve &amp; Notify</button>
+        <button class="btn btn-danger" onclick="rejectBiz('${r.id}','${r.userId}','${(r.serviceName||'').replace(/'/g,"\\'")}')"><i class="fas fa-times"></i> Reject</button>
+      </div>`;
+  } else {
+    actionHtml=`<div style="margin-top:1rem;padding:10px;background:rgba(255,255,255,0.04);border-radius:10px">
+      <p style="color:rgba(255,255,255,0.4);font-size:0.85rem">Request ${r.status}.${r.adminNote?' Note: '+r.adminNote:''}</p>
+      ${r.bizDocumentURL?`<a href="${r.bizDocumentURL}" download target="_blank" class="btn btn-success btn-sm" style="margin-top:8px"><i class="fas fa-download"></i> Download Document</a>`:''}
+    </div>`;
+  }
+  document.getElementById('bizModalTitle').innerText=r.serviceName;
+  document.getElementById('bizModalBody').innerHTML=`
+    <div class="info-row"><span class="info-label">User</span><span class="info-value">${r.userName}</span></div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-value">${r.userEmail}</span></div>
+    <div class="info-row"><span class="info-label">Phone</span><span class="info-value">${r.userPhone||'N/A'}</span></div>
+    <div class="info-row"><span class="info-label">Status</span><span class="info-value">${badge(r.status)}</span></div>
+    <div class="info-row"><span class="info-label">Progress</span><span class="info-value">${r.progress||0}%</span></div>
+    <div class="info-row"><span class="info-label">Date</span><span class="info-value">${fmtDate(r.createdAt)}</span></div>
+    <h4 style="margin:0.8rem 0 0.5rem;font-size:0.88rem;color:rgba(255,255,255,0.5)">Submitted Fields</h4>${fieldsHtml}
+    <h4 style="margin-bottom:0.5rem;font-size:0.88rem;color:rgba(255,255,255,0.5)">Uploaded Documents</h4>${docGallery(r.documents,'show')}
+    ${actionHtml}`;
+  openModal('bizModal');
+}
+async function updateBizProg(id,userId,serviceName){
+  let prog=_selectedProg[id]!=null?_selectedProg[id]:null;
+  if(prog===null){notify('Select a progress step','error');return}
+  let note=document.getElementById(`bizNote_${id}`)?.value||'';
+  let updates={progress:prog,adminNote:note,updatedAt:Date.now()};
+  if(_svcUploadFile[id+'_biz']){
+    try{let f=_svcUploadFile[id+'_biz'];let ref=storage.ref(`biz_docs/${id}/${Date.now()}_${f.name}`);await ref.put(f);updates.bizDocumentURL=await ref.getDownloadURL();_svcUploadFile[id+'_biz']=null}
+    catch(e){notify('Upload failed','error');return}
+  }
+  await db.ref(`business_requests/${id}`).update(updates);
+  if(prog===100){
+    await sendUserNotification(userId,'progress_complete','🎉 Business Request Completed!',`Your ${serviceName} is complete!${updates.bizDocumentURL?' Document ready.':''}${note?' Note: '+note:''}`,{requestId:id,documentURL:updates.bizDocumentURL||null,type:'business'});
+    notify('100% — user notified!');
+  } else {
+    await sendUserNotification(userId,'biz_update',`🔄 Business Update: ${serviceName}`,`Progress: ${prog}%.${note?' Note: '+note:''}`,{requestId:id,progress:prog});
+    notify('Updated!');
+  }
+  closeModal('bizModal');loadBizReqs();
+}
+async function approveBiz(id,userId,serviceName){
+  let note=document.getElementById(`bizNote_${id}`)?.value||'';
+  let prog=_selectedProg[id]!=null?_selectedProg[id]:100;
+  let updates={status:'approved',progress:prog,approvedAt:Date.now(),adminNote:note};
+  if(_svcUploadFile[id+'_biz']){
+    try{let f=_svcUploadFile[id+'_biz'];let ref=storage.ref(`biz_docs/${id}/${Date.now()}_${f.name}`);await ref.put(f);updates.bizDocumentURL=await ref.getDownloadURL();_svcUploadFile[id+'_biz']=null}
+    catch(e){notify('Upload failed','error');return}
+  }
+  await db.ref(`business_requests/${id}`).update(updates);
+  await sendUserNotification(userId,'progress_complete','✅ Business Request Approved!',`Your ${serviceName} has been approved!${updates.bizDocumentURL?' Document ready.':''}${note?' Note: '+note:''}`,{requestId:id,documentURL:updates.bizDocumentURL||null,type:'business'});
+  notify('Approved!');closeModal('bizModal');loadBizReqs();
+}
+async function rejectBiz(id,userId,serviceName){
+  let note=document.getElementById(`bizNote_${id}`)?.value||prompt('Reason:')||'';
+  await db.ref(`business_requests/${id}`).update({status:'rejected',rejectedAt:Date.now(),adminNote:note,progress:0});
+  await sendUserNotification(userId,'biz_rejected','❌ Business Request Rejected',`Your ${serviceName} was rejected.${note?' Reason: '+note:''}`,{requestId:id});
+  notify('Rejected','error');closeModal('bizModal');loadBizReqs();
+}
+
+// ===== USERS =====
+async function loadUsers(){let snap=await db.ref('users').once('value');allUsers=[];if(snap.exists())snap.forEach(c=>{let r=c.val();r.id=c.key;allUsers.push(r)});renderUsers()}
+function renderUsers(){
+  let q=document.getElementById('userQ').value.toLowerCase();
+  let list=allUsers.filter(u=>!q||u.name?.toLowerCase().includes(q)||u.email?.toLowerCase().includes(q)||u.phone?.includes(q));
+  document.getElementById('userBody').innerHTML=list.map(u=>`<tr>
+    <td><strong>${u.name||''}</strong></td>
+    <td>${u.email||''}</td>
+    <td>${u.phone||''}</td>
+    <td>${Object.keys(u.vehicles||{}).length} vehicle(s)</td>
+    <td>${u.verified?'<span style="color:#27ae60"><i class="fas fa-check-circle"></i> Verified</span>':'<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> Pending</span>'}</td>
+    <td style="font-size:0.78rem">${fmtDate(u.createdAt)}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button class="btn btn-info btn-xs" onclick="openUserModal('${u.id}')"><i class="fas fa-eye"></i></button>
+      <button class="btn ${u.verified?'btn-warning':'btn-success'} btn-xs" onclick="toggleUserVerify('${u.id}',${u.verified})">${u.verified?'Unverify':'Verify'}</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteRecord('users','${u.id}','User ${(u.name||'').replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`).join('')||`<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No users</td></tr>`;
+  renderMobUsers(list);
+}
+async function toggleUserVerify(uid,cur){await db.ref(`users/${uid}`).update({verified:!cur});notify(cur?'User unverified':'User verified!');loadUsers()}
+async function openUserModal(uid){
+  let snap=await db.ref(`users/${uid}`).once('value');if(!snap.exists())return;let u=snap.val();
+  let vehs=Object.keys(u.vehicles||{}).map(k=>{let v=u.vehicles[k];return`<div style="background:#080d18;border-radius:10px;padding:8px;margin-bottom:6px;font-size:0.83rem;display:flex;justify-content:space-between;align-items:center"><span><strong>${v.number}</strong> – ${v.model||''} <span style="color:${v.verified?'#27ae60':'#f39c12'}">(${v.verified?'verified':'pending'})</span></span><button class="btn btn-danger btn-xs" onclick="deleteUserVehicle('${uid}','${k}','${v.number}')"><i class="fas fa-trash"></i></button></div>`}).join('')||'<p style="color:rgba(255,255,255,0.3);font-size:0.82rem">No vehicles</p>';
+  document.getElementById('userModalTitle').innerText=u.name||'User';
+  document.getElementById('userModalBody').innerHTML=`
+    <div class="info-row"><span class="info-label">Name</span><span class="info-value">${u.name||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Email</span><span class="info-value">${u.email||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Phone</span><span class="info-value">${u.phone||'—'}</span></div>
+    <div class="info-row"><span class="info-label">Status</span><span class="info-value">${u.verified?'<span style="color:#27ae60">Verified</span>':'<span style="color:#f39c12">Pending</span>'}</span></div>
+    <div class="info-row"><span class="info-label">Joined</span><span class="info-value">${fmtDate(u.createdAt)}</span></div>
+    <h4 style="margin:1rem 0 0.5rem;font-size:0.88rem;color:rgba(255,255,255,0.5)">Vehicles</h4>${vehs}`;
+  openModal('userModal');
+}
+async function deleteUserVehicle(uid,vid,plate){
+  showDelConfirm(`Delete Vehicle ${plate}?`,'This vehicle and its verification record will be removed.',async()=>{
+    await db.ref(`users/${uid}/vehicles/${vid}`).remove();
+    await db.ref(`vehicle_verifications/${vid}`).remove();
+    notify(`Vehicle ${plate} deleted`);
+    closeModal('userModal');loadVehicles();loadUsers();
+  });
+}
+
+
+// ===== MOBILE CARD RENDERERS =====
+function renderMobVeh(list){
+  let c=document.getElementById('vehCards');if(!c)return;
+  if(!list||!list.length){c.innerHTML='<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</div>';return}
+  c.innerHTML=list.map(v=>`<div class="req-card">
+    <div class="req-card-top">
+      <div>
+        <div class="req-card-title"><i class="fas fa-car" style="color:#f39c12;margin-right:6px"></i>${v.vehicleNumber} <span style="color:rgba(255,255,255,0.45);font-size:0.78rem;font-weight:400">${v.vehicleModel||''}</span></div>
+        <div class="req-card-sub">${v.userName||''} · ${v.vehicleType||''}</div>
+      </div>
+      ${badge(v.status)}
+    </div>
+    <div class="req-card-meta">
+      <span style="color:rgba(255,255,255,0.4);font-size:0.75rem"><i class="fas fa-calendar-alt" style="margin-right:3px"></i>${fmtDate(v.requestedAt)}</span>
+      ${v.userEmail?`<span style="color:rgba(255,255,255,0.3);font-size:0.72rem">${v.userEmail}</span>`:''}
+    </div>
+    <div class="req-card-actions">
+      <button class="btn btn-info btn-sm" onclick="openVehModal('${v.id}')"><i class="fas fa-eye"></i> View</button>
+      ${v.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveVeh('${v.id}','${v.userId}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectVeh('${v.id}','${v.userId}')"><i class="fas fa-times"></i> Reject</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="deleteRecord('vehicle_verifications','${v.id}','${v.vehicleNumber}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+function renderMobSvc(list){
+  let c=document.getElementById('svcCards');if(!c)return;
+  if(!list||!list.length){c.innerHTML='<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</div>';return}
+  c.innerHTML=list.map(r=>`<div class="req-card">
+    <div class="req-card-top">
+      <div>
+        <div class="req-card-title">${r.serviceName||''}</div>
+        <div class="req-card-sub">${r.vehicleNumber||''} · ${r.userName||''}</div>
+      </div>
+      ${badge(r.status)}
+    </div>
+    <div class="req-card-meta">
+      <span style="color:#f39c12;font-weight:700;font-size:0.88rem">MVR ${r.totalAmount||0}</span>
+      <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${fmtDate(r.createdAt)}</span>
+    </div>
+    <div style="margin-bottom:8px">
+      <div style="height:6px;background:#1a2640;border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${r.progress||0}%;background:linear-gradient(90deg,#e74c3c,#e67e22);border-radius:4px"></div>
+      </div>
+      <span style="font-size:0.72rem;color:rgba(255,255,255,0.4)">${r.progress||0}% complete</span>
+    </div>
+    <div class="req-card-actions">
+      <button class="btn btn-info btn-sm" onclick="openSvcModal('${r.id}')"><i class="fas fa-tools"></i> Manage</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteRecord('service_requests','${r.id}','${(r.serviceName||'').replace(/'/g,"\'")}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+function renderMobFine(list){
+  let c=document.getElementById('fineCards');if(!c)return;
+  if(!list||!list.length){c.innerHTML='<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</div>';return}
+  c.innerHTML=list.map(r=>`<div class="req-card">
+    <div class="req-card-top">
+      <div>
+        <div class="req-card-title"><i class="fas fa-exclamation-triangle" style="color:#e67e22;margin-right:6px"></i>${r.vehicleNumber||''}</div>
+        <div class="req-card-sub">ID: ${r.ownerId||''} · ${r.userName||''}</div>
+      </div>
+      ${badge(r.status)}
+    </div>
+    <div class="req-card-meta">
+      ${r.fineDetails?`<span style="color:#f39c12;font-weight:700;font-size:0.88rem">MVR ${r.fineDetails.fineAmount+r.fineDetails.serviceFee}</span>`:'<span style="color:rgba(255,255,255,0.35);font-size:0.78rem">Fine not set</span>'}
+      <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${fmtDate(r.createdAt)}</span>
+      ${(r.paid||r.status==='payment_submitted')?'<span style="color:#27ae60;font-size:0.78rem"><i class="fas fa-check-circle"></i> Paid</span>':''}
+    </div>
+    <div class="req-card-actions">
+      <button class="btn btn-info btn-sm" onclick="openFineModal('${r.id}')"><i class="fas fa-gavel"></i> Manage</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteRecord('fine_requests','${r.id}','Fine ${r.vehicleNumber}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+function renderMobBiz(list){
+  let c=document.getElementById('bizCards');if(!c)return;
+  if(!list||!list.length){c.innerHTML='<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No records</div>';return}
+  c.innerHTML=list.map(r=>`<div class="req-card">
+    <div class="req-card-top">
+      <div>
+        <div class="req-card-title"><i class="fas fa-briefcase" style="color:#9b59b6;margin-right:6px"></i>${r.serviceName||''}</div>
+        <div class="req-card-sub">${r.userName||''}</div>
+      </div>
+      ${badge(r.status)}
+    </div>
+    <div class="req-card-meta">
+      <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${fmtDate(r.createdAt)}</span>
+    </div>
+    <div style="margin-bottom:8px">
+      <div style="height:6px;background:#1a2640;border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${r.progress||0}%;background:linear-gradient(90deg,#9b59b6,#8e44ad);border-radius:4px"></div>
+      </div>
+      <span style="font-size:0.72rem;color:rgba(255,255,255,0.4)">${r.progress||0}% complete</span>
+    </div>
+    <div class="req-card-actions">
+      <button class="btn btn-info btn-sm" onclick="openBizModal('${r.id}')"><i class="fas fa-eye"></i> Manage</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteRecord('business_requests','${r.id}','${(r.serviceName||'').replace(/'/g,"\'")}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+function renderMobUsers(list){
+  let c=document.getElementById('userCards');if(!c)return;
+  if(!list||!list.length){c.innerHTML='<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No users</div>';return}
+  c.innerHTML=list.map(u=>`<div class="req-card">
+    <div class="req-card-top">
+      <div>
+        <div class="req-card-title"><i class="fas fa-user" style="color:#1abc9c;margin-right:6px"></i>${u.name||''}</div>
+        <div class="req-card-sub">${u.email||''} ${u.phone?'· '+u.phone:''}</div>
+      </div>
+      <span style="color:${u.verified?'#27ae60':'#f39c12'};font-size:0.8rem;font-weight:600"><i class="fas ${u.verified?'fa-check-circle':'fa-clock'}"></i> ${u.verified?'Verified':'Pending'}</span>
+    </div>
+    <div class="req-card-meta">
+      <span style="color:rgba(255,255,255,0.4);font-size:0.75rem"><i class="fas fa-car" style="margin-right:3px"></i>${Object.keys(u.vehicles||{}).length} vehicle(s)</span>
+      <span style="color:rgba(255,255,255,0.4);font-size:0.75rem">${fmtDate(u.createdAt)}</span>
+    </div>
+    <div class="req-card-actions">
+      <button class="btn btn-info btn-sm" onclick="openUserModal('${u.id}')"><i class="fas fa-eye"></i> View</button>
+      <button class="btn ${u.verified?'btn-warning':'btn-success'} btn-sm" onclick="toggleUserVerify('${u.id}',${u.verified})">${u.verified?'Unverify':'Verify'}</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteRecord('users','${u.id}','${(u.name||'').replace(/'/g,"\'")}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+// Also update badge counts in bottom nav
+function syncMobBadges(){
+  let vb=document.getElementById('vBadge'),sb2=document.getElementById('sBadge'),fb=document.getElementById('fBadge');
+  let mvb=document.getElementById('mvBadge'),msb=document.getElementById('msBadge'),mfb=document.getElementById('mfBadge');
+  if(vb&&mvb){mvb.innerText=vb.innerText;mvb.style.display=vb.innerText==='0'?'none':'flex'}
+  if(sb2&&msb){msb.innerText=sb2.innerText;msb.style.display=sb2.innerText==='0'?'none':'flex'}
+  if(fb&&mfb){mfb.innerText=fb.innerText;mfb.style.display=fb.innerText==='0'?'none':'flex'}
+}
+
+// ===== ALL DOCUMENTS =====
+async function initAllDocs(){
+  let snap=await db.ref('users').once('value');let sel=document.getElementById('docUserFilter');sel.innerHTML='<option value="">All Users</option>';
+  if(snap.exists())snap.forEach(c=>{let u=c.val();sel.innerHTML+=`<option value="${c.key}">${u.name} (${u.email})</option>`});
+  loadAllDocs();
+}
+async function loadAllDocs(){
+  let uid=document.getElementById('docUserFilter').value;
+  let type=document.getElementById('docTypeFilter').value;
+  let grid=document.getElementById('allDocsGrid');grid.innerHTML='<p style="color:rgba(255,255,255,0.35)">Loading...</p>';
+  let docs=[];
+  if(type==='all'||type==='vehicle'){let snap=await db.ref('vehicle_verifications').once('value');if(snap.exists())snap.forEach(c=>{let d=c.val();if(uid&&d.userId!==uid)return;if(d.documents)Object.keys(d.documents).forEach(k=>{let u=d.documents[k];if(u&&u.startsWith('http'))docs.push({label:`Vehicle ${d.vehicleNumber} – ${k}`,url:u,user:d.userName})})})}
+  if(type==='all'||type==='service'||type==='payment'){let snap=await db.ref('service_requests').once('value');if(snap.exists())snap.forEach(c=>{let r=c.val();if(uid&&r.userId!==uid)return;if(type==='payment'){if(r.documents?.paymentSlip)docs.push({label:`Payment – ${r.serviceName}`,url:r.documents.paymentSlip,user:r.userName});if(r.paymentSlipUrl)docs.push({label:`Slip – ${r.serviceName}`,url:r.paymentSlipUrl,user:r.userName})}else{Object.keys(r.documents||{}).forEach(k=>{let u=r.documents[k];if(u&&u.startsWith('http'))docs.push({label:`${r.serviceName} – ${k}`,url:u,user:r.userName})});if(r.documentURL)docs.push({label:`Sticker – ${r.serviceName}`,url:r.documentURL,user:r.userName})}})}
+  if(type==='all'||type==='fine'){let snap=await db.ref('fine_requests').once('value');if(snap.exists())snap.forEach(c=>{let r=c.val();if(uid&&r.userId!==uid)return;if(r.documentUrl)docs.push({label:`Fine ${r.vehicleNumber}`,url:r.documentUrl,user:r.userName});if(r.paymentSlip)docs.push({label:`Fine Payment ${r.vehicleNumber}`,url:r.paymentSlip,user:r.userName})})}
+  if(type==='all'||type==='business'){let snap=await db.ref('business_requests').once('value');if(snap.exists())snap.forEach(c=>{let r=c.val();if(uid&&r.userId!==uid)return;Object.keys(r.documents||{}).forEach(k=>{let u=r.documents[k];if(u&&u.startsWith('http'))docs.push({label:`${r.serviceName} – ${k}`,url:u,user:r.userName})});if(r.bizDocumentURL)docs.push({label:`BizDoc – ${r.serviceName}`,url:r.bizDocumentURL,user:r.userName})})}
+  if(type==='all'||type==='admin'){let uSnap=await db.ref('users').once('value');let uids=uid?[uid]:(uSnap.exists()?Object.keys(uSnap.val()):[]);for(let u of uids){let snap=await db.ref(`admin_uploads/${u}`).once('value');if(snap.exists())snap.forEach(c=>{let d=c.val();if(d.url)docs.push({label:d.name,url:d.url,user:d.uploadedBy||'admin'})})}}
+  if(!docs.length){grid.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem;grid-column:1/-1">No documents found</p>';return}
+  grid.innerHTML=docs.map(d=>{let img=isImgUrl(d.url);return`<div class="doc-thumb" title="${d.label}"><div style="position:absolute;inset:0">${img?`<img src="${d.url}" onclick="openLB('${d.url}')" alt="${d.label}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:`<div class="fi" onclick="window.open('${d.url}')"><i class="fas fa-file-pdf"></i><span>${d.label.substring(0,16)}</span></div>`}</div><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.75);padding:3px 5px;font-size:0.6rem;color:rgba(255,255,255,0.7)">${d.label.substring(0,20)}</div></div>`}).join('');
+}
+
+// ===== VEHICLE TYPE PRICING — TAB SWITCHER =====
+function switchVtTab(tab, el){
+  document.querySelectorAll('#typePricingSection .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('vtVehiclePane').style.display = tab==='vehicle'?'block':'none';
+  document.getElementById('vtTypePane').style.display   = tab==='type'  ?'block':'none';
+  if(tab==='vehicle') initVpPricing();
+  else initTypePricing();
+}
+
+// ===== PER-VEHICLE PRICING =====
+let _vpAllVehicles=[]; // [{uid,vid,plate,model,type,userName,verified}]
+let _vpSelUid='', _vpSelVid='', _vpSelVehicle=null;
+let _vehicleTypes={};
+
+async function initVpPricing(){
+  // Load vehicle types for filter + icons
+  let vtSnap=await db.ref('vehicle_types').once('value');
+  _vehicleTypes = vtSnap.exists() ? vtSnap.val() : {car:{name:'Car',icon:'fa-car'},bike:{name:'Motorcycle',icon:'fa-motorcycle'},truck:{name:'Truck',icon:'fa-truck'},bus:{name:'Bus',icon:'fa-bus'}};
+  // Populate type filter
+  let typeSel=document.getElementById('vpTypeFilter');
+  typeSel.innerHTML='<option value="">All Types</option>';
+  Object.keys(_vehicleTypes).forEach(k=>typeSel.innerHTML+=`<option value="${k}">${_vehicleTypes[k].name||k}</option>`);
+  // Load all users + their vehicles
+  let uSnap=await db.ref('users').once('value');
+  _vpAllVehicles=[];
+  let userSel=document.getElementById('vpUserFilter');
+  userSel.innerHTML='<option value="">All Users</option>';
+  if(uSnap.exists()){
+    uSnap.forEach(c=>{
+      let u=c.val(),uid=c.key;
+      userSel.innerHTML+=`<option value="${uid}">${u.name||u.email||uid}</option>`;
+      if(u.vehicles)Object.keys(u.vehicles).forEach(vid=>{
+        let v=u.vehicles[vid];
+        _vpAllVehicles.push({uid,vid,plate:v.number||vid,model:v.model||'',type:v.type||'',userName:u.name||u.email||uid,verified:v.verified||false});
+      });
+    });
+  }
+  renderVpVehicles();
+  loadVpAllRecords();
+}
+
+async function loadVpVehicles(){renderVpVehicles()}
+
+function renderVpVehicles(){
+  let userF=document.getElementById('vpUserFilter')?.value||'';
+  let typeF=document.getElementById('vpTypeFilter')?.value||'';
+  let plateQ=(document.getElementById('vpPlateQ')?.value||'').toLowerCase();
+  let list=_vpAllVehicles.filter(v=>
+    (!userF||v.uid===userF)&&
+    (!typeF||v.type===typeF)&&
+    (!plateQ||v.plate.toLowerCase().includes(plateQ)||v.model.toLowerCase().includes(plateQ))
+  );
+  let div=document.getElementById('vpVehicleList');
+  if(!list.length){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No vehicles found</p>';return}
+  div.innerHTML=`<div class="table-wrap"><table style="min-width:520px">
+    <thead><tr><th>Plate</th><th>Model</th><th>Type</th><th>Owner</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>${list.map(v=>`<tr style="${_vpSelVid===v.vid?'background:rgba(243,156,18,0.07);':''}" id="vprow_${v.vid}">
+      <td><strong>${v.plate}</strong></td>
+      <td style="color:rgba(255,255,255,0.6);font-size:0.82rem">${v.model}</td>
+      <td><span style="background:#1a2640;padding:2px 8px;border-radius:8px;font-size:0.75rem">${_vehicleTypes[v.type]?.name||v.type}</span></td>
+      <td style="font-size:0.82rem">${v.userName}</td>
+      <td>${v.verified?'<span style="color:#27ae60;font-size:0.78rem"><i class="fas fa-check-circle"></i> Verified</span>':'<span style="color:#f39c12;font-size:0.78rem"><i class="fas fa-clock"></i> Pending</span>'}</td>
+      <td><button class="btn btn-info btn-xs" onclick="selectVpVehicle('${v.uid}','${v.vid}')"><i class="fas fa-tag"></i> Set Pricing</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+async function selectVpVehicle(uid, vid){
+  _vpSelUid=uid; _vpSelVid=vid;
+  _vpSelVehicle=_vpAllVehicles.find(v=>v.uid===uid&&v.vid===vid)||null;
+  if(!_vpSelVehicle)return;
+  // Highlight row
+  document.querySelectorAll('[id^="vprow_"]').forEach(r=>r.style.background='');
+  let row=document.getElementById(`vprow_${vid}`);
+  if(row)row.style.background='rgba(243,156,18,0.07)';
+  // Show pricing card
+  let card=document.getElementById('vpPricingCard');card.style.display='block';
+  // Vehicle header
+  let vt=_vehicleTypes[_vpSelVehicle.type]||{};
+  document.getElementById('vpVehiclePlate').innerText=_vpSelVehicle.plate;
+  document.getElementById('vpVehicleMeta').innerText=`${_vpSelVehicle.model} · ${vt.name||_vpSelVehicle.type} · ${_vpSelVehicle.userName}`;
+  document.getElementById('vpVehicleIcon').innerHTML=`<i class="fas ${vt.icon||'fa-car'}"></i>`;
+  // Scroll to pricing card
+  card.scrollIntoView({behavior:'smooth',block:'start'});
+  await buildVpPricingForm();
+}
+
+async function buildVpPricingForm(){
+  if(!_vpSelVehicle)return;
+  let uid=_vpSelUid, vid=_vpSelVid, vtype=_vpSelVehicle.type;
+  // Load services
+  if(!Object.keys(svcs).length){let s=await db.ref('services').once('value');if(s.exists())svcs=s.val();}
+  let svcKeys=Object.keys(svcs);
+  // Load type defaults
+  let defSa={},defSp={};
+  let saSnap=await db.ref(`service_amounts/${vtype}`).once('value');if(saSnap.exists())defSa=saSnap.val();
+  let spSnap=await db.ref(`sticker_prices/${vtype}`).once('value');if(spSnap.exists())defSp=spSnap.val();
+  // Load existing custom
+  let cpSnap=await db.ref(`custom_pricing/${uid}/${vid}`).once('value');
+  let cp=cpSnap.exists()?cpSnap.val():{};
+  let hasCustom=Object.keys(cp).filter(k=>!['vehicleNumber','vehicleType','updatedAt','updatedBy','_annual'].includes(k)).length>0||cp._annual!=null;
+  // Custom banner
+  let banner=document.getElementById('vpCustomBanner');
+  banner.style.display=hasCustom?'flex':'none';
+  // Build table
+  let html=`<table class="cc-table" style="min-width:480px">
+    <thead><tr>
+      <th>Service</th>
+      <th>Default Svc Fee</th>
+      <th style="background:rgba(243,156,18,0.06)">Custom Svc Fee (MVR)</th>
+      <th>Default Sticker</th>
+      <th style="background:rgba(243,156,18,0.06)">Custom Sticker (MVR)</th>
+      <th>Total</th>
+    </tr></thead>
+    <tbody>`;
+  svcKeys.forEach(k=>{
+    let ds=defSa[k]||0, dst=defSp[k]||0;
+    let cs=cp[k]?.serviceAmount!=null?cp[k].serviceAmount:'';
+    let cst=cp[k]?.stickerAmount!=null?cp[k].stickerAmount:'';
+    let effS=cs!==''?Number(cs):ds;
+    let effSt=cst!==''?Number(cst):dst;
+    let isCustomRow=cp[k]?.serviceAmount!=null||cp[k]?.stickerAmount!=null;
+    html+=`<tr style="${isCustomRow?'background:rgba(243,156,18,0.04)':''}">
+      <td>
+        <div style="font-weight:600;font-size:0.85rem">${svcs[k]?.name||k}</div>
+        ${isCustomRow?`<span style="background:rgba(243,156,18,0.18);color:#f39c12;border-radius:8px;padding:1px 7px;font-size:0.65rem;font-weight:700">CUSTOM</span>`:''}
+      </td>
+      <td style="color:rgba(255,255,255,0.35);font-size:0.82rem">MVR ${ds}</td>
+      <td style="background:rgba(243,156,18,0.03)">
+        <input type="number" class="form-input" id="vp_sa_${k}" value="${cs}" placeholder="MVR ${ds}" min="0"
+          style="max-width:120px;${isCustomRow?'border-color:rgba(243,156,18,0.5);color:#f39c12':''}"
+          oninput="vpRecalcRow('${k}',${ds},${dst})">
+      </td>
+      <td style="color:rgba(255,255,255,0.35);font-size:0.82rem">MVR ${dst}</td>
+      <td style="background:rgba(243,156,18,0.03)">
+        <input type="number" class="form-input" id="vp_sp_${k}" value="${cst}" placeholder="MVR ${dst}" min="0"
+          style="max-width:120px;${isCustomRow?'border-color:rgba(243,156,18,0.5);color:#f39c12':''}"
+          oninput="vpRecalcRow('${k}',${ds},${dst})">
+      </td>
+      <td><span id="vp_tot_${k}" style="color:#f39c12;font-weight:700">MVR ${effS+effSt}</span></td>
+    </tr>`;
+  });
+  // Annual fee
+  let annualDef=0;
+  let aSnap=await db.ref(`annual_fees/${vtype}`).once('value');
+  if(aSnap.exists())annualDef=aSnap.val();
+  let annualCustom=cp._annual!=null?cp._annual:'';
+  html+=`<tr style="border-top:2px solid rgba(243,156,18,0.25);background:rgba(243,156,18,0.03)">
+    <td colspan="2"><div style="font-weight:700;color:#f39c12"><i class="fas fa-calendar-alt" style="margin-right:5px"></i>Annual Fee</div><div style="font-size:0.72rem;color:rgba(255,255,255,0.35)">Applies to this vehicle annually</div></td>
+    <td colspan="4">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="color:rgba(255,255,255,0.35);font-size:0.82rem;flex-shrink:0">Default: MVR ${annualDef}</div>
+        <input type="number" class="form-input" id="vp_annual" value="${annualCustom}" placeholder="MVR ${annualDef}" min="0"
+          style="max-width:160px;${annualCustom!==''?'border-color:rgba(243,156,18,0.5);color:#f39c12':''}">
+        <span style="color:rgba(255,255,255,0.3);font-size:0.75rem">Leave blank for default</span>
+      </div>
+    </td>
+  </tr>`;
+  html+='</tbody></table>';
+  document.getElementById('vpPricingForm').innerHTML=html;
+}
+
+window.vpRecalcRow=function(k,ds,dst){
+  let sv=parseFloat(document.getElementById(`vp_sa_${k}`)?.value);
+  let stv=parseFloat(document.getElementById(`vp_sp_${k}`)?.value);
+  let effS=isNaN(sv)?ds:sv;
+  let effSt=isNaN(stv)?dst:stv;
+  let tot=document.getElementById(`vp_tot_${k}`);
+  if(tot)tot.innerText='MVR '+(effS+effSt);
+};
+
+async function saveVpFees(){
+  if(!_vpSelUid||!_vpSelVid){notify('Select a vehicle first','error');return}
+  if(!Object.keys(svcs).length){let s=await db.ref('services').once('value');if(s.exists())svcs=s.val();}
+  let svcKeys=Object.keys(svcs);
+  let data={vehicleNumber:_vpSelVehicle?.plate||'',vehicleType:_vpSelVehicle?.type||'',updatedAt:Date.now(),updatedBy:'admin'};
+  let hasAny=false;
+  svcKeys.forEach(k=>{
+    let sv=document.getElementById(`vp_sa_${k}`)?.value;
+    let stv=document.getElementById(`vp_sp_${k}`)?.value;
+    if(sv!==''||stv!==''){
+      hasAny=true;data[k]={};
+      if(sv!=='')data[k].serviceAmount=Number(sv);
+      if(stv!=='')data[k].stickerAmount=Number(stv);
+    }
+  });
+  let ann=document.getElementById('vp_annual')?.value;
+  if(ann!==''){hasAny=true;data._annual=Number(ann);}
+  if(!hasAny){
+    // Clear custom pricing — revert to defaults
+    await db.ref(`custom_pricing/${_vpSelUid}/${_vpSelVid}`).remove();
+    notify('No custom values — pricing reset to defaults');
+  } else {
+    await db.ref(`custom_pricing/${_vpSelUid}/${_vpSelVid}`).set(data);
+    notify(`✅ Pricing saved for ${_vpSelVehicle.plate} — user sees custom prices!`);
+  }
+  await buildVpPricingForm();
+  loadVpAllRecords();
+}
+
+async function clearVpFees(){
+  if(!_vpSelUid||!_vpSelVid)return;
+  showDelConfirm(`Reset Pricing for ${_vpSelVehicle?.plate||'this vehicle'}?`,
+    'Custom pricing will be removed and defaults will apply.',
+    async()=>{
+      await db.ref(`custom_pricing/${_vpSelUid}/${_vpSelVid}`).remove();
+      notify('Pricing reset to defaults');
+      await buildVpPricingForm();
+      loadVpAllRecords();
+    }
+  );
+}
+
+async function loadVpAllRecords(){
+  let div=document.getElementById('vpAllRecords');if(!div)return;
+  let snap=await db.ref('custom_pricing').once('value');
+  if(!snap.exists()){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No vehicles have custom pricing yet.</p>';return}
+  let uSnap=await db.ref('users').once('value');let umap={};
+  if(uSnap.exists())uSnap.forEach(c=>{umap[c.key]=c.val().name||c.val().email||c.key});
+  let rows=[];
+  snap.forEach(uc=>{
+    let uid=uc.key;
+    uc.forEach(vc=>{
+      let vid=vc.key,d=vc.val();
+      let svcCount=Object.keys(d).filter(k=>!['vehicleNumber','vehicleType','updatedAt','updatedBy','_annual'].includes(k)).length;
+      let hasAnnual=d._annual!=null;
+      rows.push({uid,vid,uname:umap[uid]||uid,vnum:d.vehicleNumber||vid,vtype:d.vehicleType||'',svcCount,hasAnnual,annual:d._annual,updatedAt:d.updatedAt});
+    });
+  });
+  if(!rows.length){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No vehicles have custom pricing yet.</p>';return}
+  div.innerHTML=`<div class="table-wrap"><table style="min-width:540px">
+    <thead><tr><th>Vehicle</th><th>Owner</th><th>Type</th><th>Custom Services</th><th>Annual Fee</th><th>Updated</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><strong>${r.vnum}</strong></td>
+      <td style="font-size:0.82rem">${r.uname}</td>
+      <td><span style="background:#1a2640;padding:2px 8px;border-radius:8px;font-size:0.75rem">${_vehicleTypes[r.vtype]?.name||r.vtype}</span></td>
+      <td>${r.svcCount>0?`<span style="background:rgba(52,152,219,0.15);color:#3498db;padding:2px 9px;border-radius:8px;font-size:0.78rem">${r.svcCount} svc override${r.svcCount>1?'s':''}</span>`:'<span style="color:rgba(255,255,255,0.25);font-size:0.78rem">Default</span>'}</td>
+      <td>${r.hasAnnual?`<span style="color:#f39c12;font-weight:700">MVR ${r.annual.toLocaleString()}</span>`:'<span style="color:rgba(255,255,255,0.25);font-size:0.78rem">Default</span>'}</td>
+      <td style="font-size:0.78rem">${fmtDate(r.updatedAt)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-info btn-xs" onclick="selectVpVehicle('${r.uid}','${r.vid}')"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteVpRecord('${r.uid}','${r.vid}','${r.vnum}')"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function deleteVpRecord(uid,vid,plate){
+  showDelConfirm(`Delete custom pricing for ${plate}?`,'Default type pricing will apply.',async()=>{
+    await db.ref(`custom_pricing/${uid}/${vid}`).remove();
+    notify('Custom pricing deleted');
+    if(_vpSelVid===vid)await buildVpPricingForm();
+    loadVpAllRecords();
+  });
+}
+
+// ===== VEHICLE TYPE DEFAULTS =====
+async function initTypePricing(){
+  let snap=await db.ref('vehicle_types').once('value');
+  if(snap.exists())_vehicleTypes=snap.val();
+  else _vehicleTypes={car:{name:'Car',icon:'fa-car'},bike:{name:'Motorcycle',icon:'fa-motorcycle'},truck:{name:'Truck',icon:'fa-truck'},bus:{name:'Bus',icon:'fa-bus'}};
+  let sel=document.getElementById('typePricingVt');if(!sel)return;
+  let prev=sel.value;sel.innerHTML='';
+  Object.keys(_vehicleTypes).forEach(k=>{let vt=_vehicleTypes[k];sel.innerHTML+=`<option value="${k}">${vt.name||k}</option>`});
+  if(prev&&_vehicleTypes[prev])sel.value=prev;
+  else if(Object.keys(_vehicleTypes).length)sel.value=Object.keys(_vehicleTypes)[0];
+  loadTypePricing();
+}
+
+async function loadTypePricing(){
+  let type=document.getElementById('typePricingVt')?.value;
+  if(!type){document.getElementById('typePricingForm').innerHTML='<p style="color:rgba(255,255,255,0.4)">Select a type</p>';return}
+  let svcKeys=Object.keys(svcs);
+  if(!svcKeys.length){let snap=await db.ref('services').once('value');if(snap.exists()){svcs=snap.val();svcKeys=Object.keys(svcs)}}
+  let sa={},sp={};
+  let saS=await db.ref(`service_amounts/${type}`).once('value');if(saS.exists())sa=saS.val();
+  let spS=await db.ref(`sticker_prices/${type}`).once('value');if(spS.exists())sp=spS.val();
+  let vt=_vehicleTypes[type]||{};
+  let html=`<div style="background:#080d18;border-radius:12px;padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;border:1px solid #1e3355">
+    <div style="width:36px;height:36px;border-radius:10px;background:rgba(243,156,18,0.12);display:flex;align-items:center;justify-content:center;font-size:1rem;color:#f39c12"><i class="fas ${vt.icon||'fa-car'}"></i></div>
+    <div><div style="font-weight:700;font-size:0.92rem">${vt.name||type} Default Pricing</div><div style="color:rgba(255,255,255,0.4);font-size:0.75rem">Applies to all ${vt.name||type} vehicles unless overridden per vehicle</div></div>
+  </div>
+  <div style="overflow-x:auto"><table class="cc-table" style="min-width:420px"><thead><tr><th>Service</th><th>Service Fee (MVR)</th><th>Sticker Fee (MVR)</th><th>Total</th></tr></thead><tbody>`;
+  svcKeys.forEach(k=>{
+    let saVal=sa[k]||0,spVal=sp[k]||0;
+    html+=`<tr>
+      <td><div style="font-weight:600">${svcs[k]?.name||k}</div></td>
+      <td><input type="number" class="form-input" id="tp_sa_${k}" value="${saVal}" min="0"
+        oninput="document.getElementById('tp_tot_${k}').innerText='MVR '+(parseFloat(this.value||0)+parseFloat(document.getElementById('tp_sp_${k}').value||0))"
+        style="max-width:120px"></td>
+      <td><input type="number" class="form-input" id="tp_sp_${k}" value="${spVal}" min="0"
+        oninput="document.getElementById('tp_tot_${k}').innerText='MVR '+(parseFloat(document.getElementById('tp_sa_${k}').value||0)+parseFloat(this.value||0))"
+        style="max-width:120px"></td>
+      <td><span id="tp_tot_${k}" style="color:#f39c12;font-weight:700">MVR ${saVal+spVal}</span></td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('typePricingForm').innerHTML=html;
+}
+
+async function saveTypePricing(){
+  let type=document.getElementById('typePricingVt').value;if(!type){notify('Select a type','error');return}
+  let svcKeys=Object.keys(svcs);let sa={};let sp={};
+  svcKeys.forEach(k=>{sa[k]=parseInt(document.getElementById(`tp_sa_${k}`)?.value)||0;sp[k]=parseInt(document.getElementById(`tp_sp_${k}`)?.value)||0});
+  await db.ref(`service_amounts/${type}`).set(sa);await db.ref(`sticker_prices/${type}`).set(sp);
+  notify(`✅ Default pricing saved for ${_vehicleTypes[type]?.name||type}!`);
+}
+
+// ===== BUSINESS PRICING =====
+async function loadBizPricing(){
+  let snap=await db.ref('business_prices').once('value');let existing=snap.exists()?snap.val():{};
+  let bizKeys=Object.keys(BIZ_NAMES);
+  let html=`<div style="overflow-x:auto"><table class="cc-table"><thead><tr><th>Business Service</th><th>Service Fee (MVR)</th><th>Processing Days</th><th>Notes</th></tr></thead><tbody>`;
+  bizKeys.forEach(k=>{let d=existing[k]||{};html+=`<tr><td style="font-weight:600">${BIZ_NAMES[k]}</td><td><input type="number" class="form-input" id="bp_fee_${k}" value="${d.fee||0}" style="max-width:120px"></td><td><input type="number" class="form-input" id="bp_days_${k}" value="${d.processingDays||3}" style="max-width:100px"></td><td><input type="text" class="form-input" id="bp_note_${k}" value="${d.notes||''}" placeholder="Optional" style="max-width:200px"></td></tr>`});
+  html+='</tbody></table></div>';
+  document.getElementById('bizPricingForm').innerHTML=html;
+}
+async function saveBizPricing(){
+  let bizKeys=Object.keys(BIZ_NAMES);let data={};
+  bizKeys.forEach(k=>{data[k]={fee:parseInt(document.getElementById(`bp_fee_${k}`)?.value)||0,processingDays:parseInt(document.getElementById(`bp_days_${k}`)?.value)||3,notes:document.getElementById(`bp_note_${k}`)?.value||''}});
+  await db.ref('business_prices').set(data);notify('Business pricing saved!');
+}
+
+// ===== BANK DETAILS =====
+async function loadBankDetails(){
+  let snap=await db.ref('bank_details').once('value');if(!snap.exists())return;
+  let b=snap.val();currentBankDetails=b;
+  ['bkName','bkAccName','bkAccNum','bkBranch','bkSwift'].forEach((id,i)=>{let el=document.getElementById(id);if(el)el.value=[b.bankName,b.accountName,b.accountNumber,b.branch,b.swift][i]||''});
+  updateBankPreview(b);
+}
+function updateBankPreview(b){
+  let prev=document.getElementById('bankPreview'),pc=document.getElementById('bankPreviewContent');if(!prev)return;
+  prev.style.display='block';
+  pc.innerHTML=`<div class="bank-display-row"><span class="bank-display-label">Bank</span><span class="bank-display-value">${b.bankName||'—'}</span></div><div class="bank-display-row"><span class="bank-display-label">Account Name</span><span class="bank-display-value">${b.accountName||'—'}</span></div><div class="bank-display-row"><span class="bank-display-label">Account No.</span><span class="bank-display-value">${b.accountNumber||'—'}</span></div><div class="bank-display-row"><span class="bank-display-label">Branch</span><span class="bank-display-value">${b.branch||'—'}</span></div>`;
+}
+async function saveBankDetails(){
+  let b={bankName:document.getElementById('bkName').value,accountName:document.getElementById('bkAccName').value,accountNumber:document.getElementById('bkAccNum').value,branch:document.getElementById('bkBranch').value,swift:document.getElementById('bkSwift').value,updatedAt:Date.now()};
+  await db.ref('bank_details').set(b);currentBankDetails=b;updateBankPreview(b);renderDashBankDisplay();
+  notify('Bank details saved!');
+}
+
+// ===== ADMIN UPLOAD TO USER =====
+async function loadUserList(){
+  let snap=await db.ref('users').once('value');let sel=document.getElementById('uploadUid');if(!sel)return;
+  sel.innerHTML='<option value="">Select user...</option>';
+  if(snap.exists())snap.forEach(c=>{let u=c.val();sel.innerHTML+=`<option value="${c.key}">${u.name} (${u.email})</option>`});
+  loadRecentUploads();
+}
+function handleAdminFile(inp){
+  aUpFile=inp.files[0];if(!aUpFile)return;
+  let div=document.getElementById('uploadPreview');
+  if(aUpFile.type.startsWith('image/')){
+    let r=new FileReader();r.onload=e=>div.innerHTML=`<div class="upload-preview-box"><img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;border-radius:10px"><div class="upload-preview-info"><div class="fname">${aUpFile.name}</div><div class="fsize">${fmtSize(aUpFile.size)}</div></div><button class="upload-remove" onclick="aUpFile=null;document.getElementById('uploadPreview').innerHTML=''"><i class="fas fa-times"></i></button></div>`;
+    r.readAsDataURL(aUpFile);
+  } else {
+    div.innerHTML=`<div class="upload-preview-box"><div class="doc-icon-big"><i class="fas fa-file-pdf"></i></div><div class="upload-preview-info"><div class="fname">${aUpFile.name}</div><div class="fsize">${fmtSize(aUpFile.size)}</div></div><button class="upload-remove" onclick="aUpFile=null;document.getElementById('uploadPreview').innerHTML=''"><i class="fas fa-times"></i></button></div>`;
+  }
+}
+async function doAdminUpload(){
+  let uid=document.getElementById('uploadUid').value,name=document.getElementById('uploadDocName').value;
+  if(!uid||!name||!aUpFile){notify('Select user, enter name and choose file','error');return}
+  notify('Uploading...','info');
+  try{
+    let ref=storage.ref(`admin_uploads/${uid}/${Date.now()}_${aUpFile.name}`);
+    await ref.put(aUpFile);let url=await ref.getDownloadURL();
+    let did='doc_'+Date.now();let isImg=aUpFile.type.startsWith('image/');
+    await db.ref(`admin_uploads/${uid}/${did}`).set({name,url,uploadedAt:Date.now(),uploadedBy:'admin',isImage:isImg});
+    await sendUserNotification(uid,'admin_upload','📄 New Document from Admin',`Admin has uploaded: "${name}". Tap to view and download.`,{documentId:did,documentURL:url,documentName:name,isImage:isImg});
+    notify('Uploaded & user notified!');
+    aUpFile=null;document.getElementById('uploadPreview').innerHTML='';document.getElementById('uploadDocName').value='';document.getElementById('uploadFile').value='';
+    loadRecentUploads();
+  }catch(err){notify('Upload failed: '+err.message,'error')}
+}
+async function loadRecentUploads(){
+  let snap=await db.ref('users').once('value');let div=document.getElementById('recentUploads');if(!div)return;
+  let uploads=[];
+  if(snap.exists()){let umap={};snap.forEach(c=>umap[c.key]=c.val().name);
+    await Promise.all(Object.keys(umap).map(async uid=>{let us=await db.ref(`admin_uploads/${uid}`).once('value');if(us.exists())us.forEach(c=>{let d=c.val();uploads.push({...d,userName:umap[uid],uid,id:c.key})})}));
+  }
+  uploads.sort((a,b)=>b.uploadedAt-a.uploadedAt);
+  div.innerHTML=uploads.slice(0,12).map(u=>`<div style="display:flex;align-items:center;gap:10px;padding:9px;background:#080d18;border-radius:12px;margin-bottom:7px">
+    <i class="fas ${u.isImage?'fa-image':'fa-file-pdf'}" style="color:${u.isImage?'#27ae60':'#3498db'};font-size:1.3rem;flex-shrink:0"></i>
+    <div style="flex:1"><div style="font-size:0.87rem;font-weight:600">${u.name}</div><div style="font-size:0.75rem;color:rgba(255,255,255,0.4)">${u.userName} · ${fmtDate(u.uploadedAt)}</div></div>
+    <a href="${u.url}" target="_blank" class="btn btn-info btn-xs"><i class="fas fa-external-link-alt"></i></a>
+    <button class="btn btn-danger btn-xs" onclick="delUpload('${u.uid}','${u.id}','${(u.name||'').replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></button>
+  </div>`).join('')||'<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No uploads yet</p>';
+}
+async function delUpload(uid,did,name){
+  showDelConfirm(`Delete "${name}"?`,'This uploaded file will be removed from the user.',async()=>{
+    await db.ref(`admin_uploads/${uid}/${did}`).remove();
+    notify('Deleted');loadRecentUploads();
+  });
+}
+
+// ===== REVENUE SECTION =====
+async function loadRevenue(){
+  let period=document.getElementById('revPeriod')?.value||'30';
+  let crDiv=document.getElementById('revCustomRange');
+  if(crDiv)crDiv.style.display=period==='custom'?'flex':'none';  let now=Date.now(),fromTs,toTs=now;
+  if(period==='today'){
+    let d=new Date();d.setHours(0,0,0,0);fromTs=d.getTime();toTs=d.getTime()+86399999;
+  } else if(period==='custom'){
+    let f=document.getElementById('revFrom')?.value,t=document.getElementById('revTo')?.value;
+    if(!f||!t){notify('Select date range','error');return}
+    fromTs=new Date(f).getTime();toTs=new Date(t).getTime()+86399999;
+  } else {
+    fromTs=now-(parseInt(period)*86400000);
+  }
+  function dkey(ts){let d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  let dayMap={};
+  function addEntry(ts,svc,fine){if(!ts||ts<fromTs||ts>toTs)return;let k=dkey(ts);if(!dayMap[k])dayMap[k]={svc:0,fine:0,txns:0};dayMap[k].svc+=svc;dayMap[k].fine+=fine;dayMap[k].txns++;}
+  // Service requests — count approved/paid
+  let sSnap=await db.ref('service_requests').once('value');
+  if(sSnap.exists())sSnap.forEach(c=>{let r=c.val();if(!r.status||r.status==='rejected'||r.status==='pending')return;let ts=r.approvedAt||r.createdAt||0;addEntry(ts,Number(r.totalAmount)||0,0);});
+  // Fine requests — count paid/payment_submitted
+  let fSnap=await db.ref('fine_requests').once('value');
+  if(fSnap.exists())fSnap.forEach(c=>{let r=c.val();if(!r.paid&&r.status!=='payment_submitted')return;let ts=r.paidAt||r.setAt||0;let amt=(Number(r.fineDetails?.fineAmount)||0)+(Number(r.fineDetails?.serviceFee)||0);addEntry(ts,0,amt);});
+  let days=Object.keys(dayMap).sort();
+  let totalSvc=0,totalFine=0,totalTxns=0;
+  days.forEach(d=>{totalSvc+=dayMap[d].svc;totalFine+=dayMap[d].fine;totalTxns+=dayMap[d].txns;});
+  let grand=totalSvc+totalFine;
+  // Summary cards
+  let sumDiv=document.getElementById('revSummary');
+  if(sumDiv)sumDiv.innerHTML=`
+    <div class="stat-card" style="border-color:rgba(39,174,96,0.4)"><div class="stat-icon" style="background:rgba(39,174,96,0.12)"><i class="fas fa-coins" style="color:#27ae60"></i></div><div class="stat-num" style="color:#27ae60;font-size:1.4rem">MVR ${grand.toLocaleString()}</div><div class="stat-label">Total Revenue</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(52,152,219,0.12)"><i class="fas fa-concierge-bell" style="color:#3498db"></i></div><div class="stat-num" style="font-size:1.4rem">MVR ${totalSvc.toLocaleString()}</div><div class="stat-label">Service Revenue</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(231,76,60,0.12)"><i class="fas fa-gavel" style="color:#e74c3c"></i></div><div class="stat-num" style="font-size:1.4rem">MVR ${totalFine.toLocaleString()}</div><div class="stat-label">Fine Revenue</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(243,156,18,0.12)"><i class="fas fa-receipt" style="color:#f39c12"></i></div><div class="stat-num">${totalTxns}</div><div class="stat-label">Transactions</div></div>`;
+  // Bar chart
+  let chartDiv=document.getElementById('revChart'),labDiv=document.getElementById('revChartLabels');
+  if(!chartDiv)return;
+  let maxVal=Math.max(1,...days.map(d=>dayMap[d].svc+dayMap[d].fine));
+  let bw=Math.max(24,Math.min(56,Math.floor(740/Math.max(days.length,1))-6));
+  chartDiv.style.gap='4px';
+  chartDiv.innerHTML=days.map(d=>{
+    let tot=dayMap[d].svc+dayMap[d].fine;
+    let sh=Math.round((dayMap[d].svc/maxVal)*155),fh=Math.round((dayMap[d].fine/maxVal)*155);
+    return`<div style="display:flex;flex-direction:column;align-items:center" title="${d}&#10;Service: MVR ${dayMap[d].svc}&#10;Fines: MVR ${dayMap[d].fine}&#10;Total: MVR ${tot}">
+      <div style="font-size:0.58rem;color:rgba(255,255,255,0.45);margin-bottom:2px;height:14px;display:flex;align-items:flex-end">${tot>0?'MVR '+tot:''}</div>
+      <div style="display:flex;flex-direction:column;justify-content:flex-end;height:155px">
+        ${dayMap[d].svc>0?`<div style="width:${bw}px;height:${sh}px;background:linear-gradient(180deg,#3498db,#1a6ea8);border-radius:${fh>0?'4px 4px 0 0':'4px 4px 0 0'}"></div>`:''}
+        ${dayMap[d].fine>0?`<div style="width:${bw}px;height:${fh}px;background:linear-gradient(180deg,#e74c3c,#a93226);border-radius:${sh>0?'0':'4px 4px'} 0 0"></div>`:''}
+        ${tot===0?`<div style="width:${bw}px;height:3px;background:#1a2640;border-radius:3px"></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  if(labDiv)labDiv.innerHTML=days.map(d=>{let p=d.split('-');return`<div style="font-size:0.6rem;color:rgba(255,255,255,0.3);text-align:center;width:${bw}px;overflow:hidden;white-space:nowrap">${p[2]+'/'+p[1]}</div>`}).join('');
+  // Revenue table
+  let tBody=document.getElementById('revTable');
+  if(tBody)tBody.innerHTML=days.length?days.slice().reverse().map(d=>{
+    let tot=dayMap[d].svc+dayMap[d].fine;
+    return`<tr>
+      <td style="font-weight:600">${d}</td>
+      <td><span style="color:#3498db;font-weight:600">MVR ${dayMap[d].svc.toLocaleString()}</span></td>
+      <td><span style="color:#e74c3c;font-weight:600">MVR ${dayMap[d].fine.toLocaleString()}</span></td>
+      <td><span style="color:#27ae60;font-weight:700">MVR ${tot.toLocaleString()}</span></td>
+      <td><span style="background:#1a2640;padding:2px 9px;border-radius:10px;font-size:0.78rem">${dayMap[d].txns}</span></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem">No revenue data for this period</td></tr>`;
+}
+
+// ===== CUSTOM / ANNUAL FEE PRICING PER VEHICLE =====
+let _cpUid='',_cpVid='',_cpVehicle=null;
+
+async function initCustomPricing(){
+  // Populate user dropdown
+  let snap=await db.ref('users').once('value');
+  let sel=document.getElementById('cpUser');if(!sel)return;
+  sel.innerHTML='<option value="">— Select User —</option>';
+  if(snap.exists())snap.forEach(c=>{let u=c.val();sel.innerHTML+=`<option value="${c.key}">${u.name||''} (${u.email||u.phone||c.key})</option>`;});
+  document.getElementById('cpVehicle').innerHTML='<option value="">— Select Vehicle —</option>';
+  document.getElementById('cpFeeForm').style.display='none';
+  document.getElementById('cpNoVehicle').style.display='none';
+  loadAllCpRecords();
+}
+
+async function loadCpVehicles(){
+  _cpUid=document.getElementById('cpUser').value;
+  let vSel=document.getElementById('cpVehicle');
+  vSel.innerHTML='<option value="">— Select Vehicle —</option>';
+  document.getElementById('cpFeeForm').style.display='none';
+  document.getElementById('cpNoVehicle').style.display='none';
+  if(!_cpUid)return;
+  let snap=await db.ref(`users/${_cpUid}/vehicles`).once('value');
+  if(!snap.exists()){document.getElementById('cpNoVehicle').style.display='block';return}
+  let found=false;
+  snap.forEach(c=>{let v=c.val();if(v.verified||v.verificationStatus==='verified'){found=true;vSel.innerHTML+=`<option value="${c.key}">${v.number||c.key} — ${v.model||''} (${v.type||''})</option>`;}});
+  if(!found)document.getElementById('cpNoVehicle').style.display='block';
+}
+
+async function loadCpCurrentFees(){
+  _cpVid=document.getElementById('cpVehicle').value;
+  document.getElementById('cpFeeForm').style.display='none';
+  if(!_cpVid||!_cpUid)return;
+  // Load vehicle data
+  let vSnap=await db.ref(`users/${_cpUid}/vehicles/${_cpVid}`).once('value');
+  if(!vSnap.exists())return;
+  _cpVehicle=vSnap.val();
+  document.getElementById('cpVehicleLabel').innerText=`${_cpVehicle.number||''} — ${_cpVehicle.model||''} (${_cpVehicle.type||''})`;
+  // Load services list
+  if(!Object.keys(svcs).length){let s2=await db.ref('services').once('value');if(s2.exists())svcs=s2.val();}
+  let svcKeys=Object.keys(svcs);
+  // Load defaults for vehicle type
+  let defSa={},defSp={};
+  let saSnap=await db.ref(`service_amounts/${_cpVehicle.type}`).once('value');if(saSnap.exists())defSa=saSnap.val();
+  let spSnap=await db.ref(`sticker_prices/${_cpVehicle.type}`).once('value');if(spSnap.exists())defSp=spSnap.val();
+  // Load existing custom fees
+  let cpSnap=await db.ref(`custom_pricing/${_cpUid}/${_cpVid}`).once('value');
+  let ex=cpSnap.exists()?cpSnap.val():{};
+  // Build form
+  let html=`<div style="overflow-x:auto">
+    <p style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-bottom:10px"><i class="fas fa-info-circle" style="color:#3498db"></i> Leave blank to use default vehicle-type pricing. Enter a value to override for this specific vehicle only — that user will only see the custom price.</p>
+    <table class="cc-table" style="min-width:520px">
+      <thead><tr><th>Service</th><th>Default Svc Fee</th><th>Custom Svc Fee (MVR)</th><th>Default Sticker</th><th>Custom Sticker (MVR)</th></tr></thead>
+      <tbody>`;
+  svcKeys.forEach(k=>{
+    let ds=defSa[k]||0,dst=defSp[k]||0;
+    let cs=ex[k]?.serviceAmount!=null?ex[k].serviceAmount:'';
+    let cst=ex[k]?.stickerAmount!=null?ex[k].stickerAmount:'';
+    html+=`<tr>
+      <td style="font-weight:600;font-size:0.84rem">${svcs[k]?.name||k}</td>
+      <td style="color:rgba(255,255,255,0.4);font-size:0.8rem">MVR ${ds}</td>
+      <td><input type="number" class="form-input" id="cps_${k}" value="${cs}" placeholder="${ds}" min="0" style="max-width:110px;background:#1a2640"></td>
+      <td style="color:rgba(255,255,255,0.4);font-size:0.8rem">MVR ${dst}</td>
+      <td><input type="number" class="form-input" id="cpst_${k}" value="${cst}" placeholder="${dst}" min="0" style="max-width:110px;background:#1a2640"></td>
+    </tr>`;
+  });
+  // Annual fee row — special dedicated field
+  let annualCustom=ex._annual!=null?ex._annual:'';
+  let annualDefault=await db.ref(`annual_fees/${_cpVehicle.type}`).once('value');
+  let annualDef=annualDefault.exists()?annualDefault.val():0;
+  html+=`<tr style="border-top:2px solid rgba(243,156,18,0.3)">
+    <td style="font-weight:700;color:#f39c12"><i class="fas fa-calendar-alt" style="margin-right:5px"></i>Annual Fee</td>
+    <td style="color:rgba(255,255,255,0.4);font-size:0.8rem">MVR ${annualDef}</td>
+    <td colspan="3"><input type="number" class="form-input" id="cp_annual" value="${annualCustom}" placeholder="${annualDef}" min="0" style="max-width:160px;background:#1a2640;border-color:rgba(243,156,18,0.4)"> <span style="color:rgba(255,255,255,0.35);font-size:0.75rem">Custom annual fee for this vehicle only</span></td>
+  </tr>`;
+  html+='</tbody></table></div>';
+  document.getElementById('cpServiceRows').innerHTML=html;
+  document.getElementById('cpFeeForm').style.display='block';
+}
+
+async function saveCpFees(){
+  if(!_cpUid||!_cpVid){notify('Select user and vehicle','error');return}
+  if(!Object.keys(svcs).length){let s2=await db.ref('services').once('value');if(s2.exists())svcs=s2.val();}
+  let svcKeys=Object.keys(svcs);
+  let data={vehicleNumber:_cpVehicle?.number||'',vehicleType:_cpVehicle?.type||'',updatedAt:Date.now(),updatedBy:'admin'};
+  let hasAny=false;
+  svcKeys.forEach(k=>{
+    let sv=document.getElementById(`cps_${k}`)?.value;
+    let stv=document.getElementById(`cpst_${k}`)?.value;
+    if(sv!==''||stv!==''){hasAny=true;data[k]={};if(sv!=='')data[k].serviceAmount=Number(sv);if(stv!=='')data[k].stickerAmount=Number(stv);}
+  });
+  let ann=document.getElementById('cp_annual')?.value;
+  if(ann!==''){hasAny=true;data._annual=Number(ann);}
+  if(!hasAny){notify('No custom values entered — nothing to save','error');return}
+  await db.ref(`custom_pricing/${_cpUid}/${_cpVid}`).set(data);
+  notify('✅ Custom pricing saved! This user will see these custom prices only for this vehicle.');
+  loadAllCpRecords();
+}
+
+async function clearCpFees(){
+  if(!_cpUid||!_cpVid)return;
+  showDelConfirm('Clear Custom Pricing?',`Custom fees for ${_cpVehicle?.number||'this vehicle'} will be removed. Default type pricing will apply.`,async()=>{
+    await db.ref(`custom_pricing/${_cpUid}/${_cpVid}`).remove();
+    notify('Custom pricing cleared — defaults restored');
+    loadCpCurrentFees();loadAllCpRecords();
+  });
+}
+
+async function loadAllCpRecords(){
+  let div=document.getElementById('allCpRecords');if(!div)return;
+  let snap=await db.ref('custom_pricing').once('value');
+  if(!snap.exists()){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No custom pricing set yet.</p>';return}
+  let uSnap=await db.ref('users').once('value');let umap={};
+  if(uSnap.exists())uSnap.forEach(c=>{umap[c.key]=c.val().name||c.val().email||c.key;});
+  let rows=[];
+  snap.forEach(uc=>{
+    let uid=uc.key;
+    uc.forEach(vc=>{
+      let vid=vc.key,d=vc.val();
+      let svcCount=Object.keys(d).filter(k=>!['vehicleNumber','vehicleType','updatedAt','updatedBy','_annual'].includes(k)).length;
+      let hasAnnual=d._annual!=null;
+      rows.push({uid,vid,uname:umap[uid]||uid,vnum:d.vehicleNumber||vid,vtype:d.vehicleType||'',svcCount,hasAnnual,annual:d._annual,updatedAt:d.updatedAt});
+    });
+  });
+  if(!rows.length){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No custom pricing records.</p>';return}
+  div.innerHTML=`<div class="table-wrap"><table style="min-width:560px">
+    <thead><tr><th>User</th><th>Vehicle</th><th>Type</th><th>Custom Services</th><th>Custom Annual Fee</th><th>Updated</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td style="font-weight:600">${r.uname}</td>
+      <td><strong>${r.vnum}</strong></td>
+      <td><span style="color:rgba(255,255,255,0.45);font-size:0.8rem">${r.vtype}</span></td>
+      <td>${r.svcCount>0?`<span style="background:rgba(52,152,219,0.15);color:#3498db;padding:2px 8px;border-radius:8px;font-size:0.78rem">${r.svcCount} service${r.svcCount>1?'s':''}</span>`:'<span style="color:rgba(255,255,255,0.25);font-size:0.78rem">—</span>'}</td>
+      <td>${r.hasAnnual?`<span style="color:#f39c12;font-weight:700">MVR ${r.annual.toLocaleString()}</span>`:'<span style="color:rgba(255,255,255,0.25);font-size:0.78rem">Default</span>'}</td>
+      <td style="font-size:0.78rem">${fmtDate(r.updatedAt)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-info btn-xs" onclick="jumpToCustomPricing('${r.uid}','${r.vid}')"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteCpRecord('${r.uid}','${r.vid}','${r.vnum}')"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+async function jumpToCustomPricing(uid,vid){
+  // Switch to custom pricing section and auto-load
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('customPricingSection').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(it=>{if(it.getAttribute('onclick')?.includes("'customPricing'"))it.classList.add('active')});
+  document.getElementById('pageTitle').innerText='Custom Pricing';
+  await initCustomPricing();
+  setTimeout(async()=>{
+    let uSel=document.getElementById('cpUser');if(uSel)uSel.value=uid;
+    await loadCpVehicles();
+    let vSel=document.getElementById('cpVehicle');if(vSel)vSel.value=vid;
+    await loadCpCurrentFees();
+  },200);
+}
+
+function deleteCpRecord(uid,vid,plate){
+  showDelConfirm(`Delete custom pricing for ${plate}?`,'Default type pricing will apply for this vehicle.',async()=>{
+    await db.ref(`custom_pricing/${uid}/${vid}`).remove();
+    notify('Custom pricing deleted');loadAllCpRecords();
+  });
+}
+</script>
+</body>
+</html>
