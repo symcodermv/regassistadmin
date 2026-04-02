@@ -194,6 +194,20 @@ textarea.form-input{resize:vertical;min-height:80px}
   .mob-cards{display:none!important}
   .desk-table{display:block!important}
 }
+/* Social link buttons admin */
+.social-admin-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #1a2640}
+.social-admin-row:last-child{border-bottom:none}
+.social-icon-preview{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+/* social btn preview same as user app */
+.social-btn-prev{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:14px;text-decoration:none;font-size:1.2rem;transition:all 0.2s}
+.s-fb{background:linear-gradient(135deg,#1877f2,#0d5dbf);color:white}
+.s-ig{background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4);color:white}
+.s-tt{background:#010101;border:1px solid rgba(255,255,255,0.15);color:white}
+.s-yt{background:linear-gradient(135deg,#ff0000,#cc0000);color:white}
+.s-tw{background:#000;border:1px solid rgba(255,255,255,0.15);color:white}
+.s-tg{background:linear-gradient(135deg,#0088cc,#006a9e);color:white}
+.s-wa{background:linear-gradient(135deg,#25d366,#128c7e);color:white}
+.s-snap{background:linear-gradient(135deg,#fffc00,#e6e300);color:#000}
 </style>
 </head>
 <body>
@@ -202,7 +216,7 @@ textarea.form-input{resize:vertical;min-height:80px}
 <div id="aLogin" class="a-login">
   <div class="login-box">
     <div class="login-logo">
-      <div class="icon"><i class="fas fa-clipboard-check"></i></div>
+      <div class="icon"><i class="fas fa-shield-alt"></i></div>
       <h2>RegAssist Admin</h2>
       <p>Secure Administrative Portal</p>
     </div>
@@ -220,7 +234,7 @@ textarea.form-input{resize:vertical;min-height:80px}
   <div class="sidebar" id="sidebar">
     <div class="s-logo" style="display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="si"><i class="fas fa-clipboard-check"></i></div>
+        <div class="si"><i class="fas fa-shield-alt"></i></div>
         <span>RegAssist Admin</span>
       </div>
       <button onclick="toggleSb()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:1.4rem;cursor:pointer;padding:4px;line-height:1;display:none" id="sbCloseBtn"><i class="fas fa-times"></i></button>
@@ -242,6 +256,10 @@ textarea.form-input{resize:vertical;min-height:80px}
     <div class="nav-item" onclick="goSection('bizPricing',this)"><i class="fas fa-briefcase"></i><span>Business Pricing</span></div>
     <div class="nav-item" onclick="goSection('fineTypes',this)"><i class="fas fa-gavel"></i><span>Fine Types</span></div>
     <div class="nav-item" onclick="goSection('bank',this)"><i class="fas fa-university"></i><span>Bank Details</span></div>
+    <div class="nav-item" onclick="goSection('socialLinks',this)"><i class="fab fa-instagram"></i><span>Social Links</span></div>
+    <div class="nav-item" onclick="goSection('homeSlides',this)"><i class="fas fa-images"></i><span>Home Slides</span></div>
+    <div class="nav-item" onclick="goSection('adsManager',this)"><i class="fas fa-tags"></i><span>Ads / Offers</span></div>
+    <div class="nav-item" onclick="goSection('howtoManager',this)"><i class="fas fa-question-circle"></i><span>How to Use Guide</span></div>
     <div class="nav-item" onclick="goSection('uploads',this)"><i class="fas fa-cloud-upload-alt"></i><span>Upload to Users</span></div>
     <div class="nav-item" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></div>
   </div>
@@ -607,6 +625,91 @@ textarea.form-input{resize:vertical;min-height:80px}
         </div>
       </div>
 
+      <!-- SOCIAL LINKS MANAGEMENT -->
+      <div id="socialLinksSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fab fa-instagram"></i>Social Media Links</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.4rem"><i class="fas fa-info-circle" style="color:#3498db"></i> These links appear on the login screen. Enter the full URL or leave blank to hide. Toggle active/inactive to show or hide each platform.</p>
+          <div id="socialLinksForm"></div>
+          <button class="btn btn-primary" style="margin-top:1.2rem;width:100%;justify-content:center" onclick="saveSocialLinks()"><i class="fas fa-save"></i> Save Social Links</button>
+        </div>
+        <!-- Live preview -->
+        <div class="card">
+          <div class="card-title"><i class="fas fa-eye"></i>Preview — as seen on login screen</div>
+          <div style="background:#141b2b;border-radius:16px;padding:1.5rem;text-align:center">
+            <div style="color:rgba(255,255,255,0.3);font-size:0.72rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Follow Us</div>
+            <div id="socialLinksPreview" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+              <span style="color:rgba(255,255,255,0.25);font-size:0.82rem">No active links yet</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOME SLIDES MANAGER -->
+      <div id="homeSlidesSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-images"></i>Home Slideshow Images</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.2rem">Upload images for the homepage slideshow. Drag to reorder. Toggle to show/hide.</p>
+          <div class="upload-zone" id="slideUploadZone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Click to upload slide image</p>
+            <p style="font-size:0.75rem;margin-top:4px">JPG, PNG (recommend 1920×1080)</p>
+            <input type="file" accept=".jpg,.jpeg,.png,.webp" onchange="uploadSlideImage(this)">
+          </div>
+          <div id="slidesList" style="margin-top:1.2rem"></div>
+        </div>
+      </div>
+
+      <!-- ADS / OFFERS MANAGER -->
+      <div id="adsManagerSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-tags"></i>Ads / Special Offers</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.2rem">Upload offer images or PDFs. Users see these when they tap "View Offers" on the home screen.</p>
+          <!-- Add new ad -->
+          <div style="background:#080d18;border-radius:14px;padding:1.2rem;border:1px solid #1e3355;margin-bottom:1.2rem">
+            <div class="card-title" style="font-size:0.9rem;margin-bottom:1rem"><i class="fas fa-plus-circle" style="color:#27ae60"></i> Add New Offer</div>
+            <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="adTitle" placeholder="e.g. Weekend Special Offer"></div>
+            <div class="form-group"><label class="form-label">Description <span style="color:rgba(255,255,255,0.35);">(optional)</span></label><textarea class="form-input" id="adDesc" rows="2" placeholder="Short description of the offer"></textarea></div>
+            <div class="form-group"><label class="form-label">Link URL <span style="color:rgba(255,255,255,0.35);">(optional — adds a button)</span></label><input type="url" class="form-input" id="adLinkUrl" placeholder="https://example.com"></div>
+            <div class="form-group"><label class="form-label">Link Button Label</label><input type="text" class="form-input" id="adLinkLabel" placeholder="Learn More" value="Learn More"></div>
+            <div class="form-group"><label class="form-label">Image or PDF</label>
+              <div class="upload-zone" id="adUploadZone">
+                <i class="fas fa-cloud-upload-alt"></i><p>Upload offer image or PDF</p>
+                <p style="font-size:0.75rem;margin-top:4px">JPG, PNG, PDF</p>
+                <input type="file" accept=".jpg,.jpeg,.png,.pdf" id="adFile" onchange="handleAdFile(this)">
+              </div>
+              <div id="adFilePreview"></div>
+            </div>
+            <button class="btn btn-success" onclick="saveAd()" style="width:100%;justify-content:center"><i class="fas fa-plus"></i> Add Offer</button>
+          </div>
+          <div id="adsList"></div>
+        </div>
+      </div>
+
+      <!-- HOW TO USE GUIDE MANAGER -->
+      <div id="howtoManagerSection" class="section">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-question-circle"></i>How to Use Guide</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:1.2rem">Add step-by-step guide for users. Each step can have a title, description and an image. Users see this when they tap "How to Use" on the home screen.</p>
+          <!-- Add step -->
+          <div style="background:#080d18;border-radius:14px;padding:1.2rem;border:1px solid #1e3355;margin-bottom:1.2rem">
+            <div class="card-title" style="font-size:0.9rem;margin-bottom:1rem"><i class="fas fa-plus-circle" style="color:#27ae60"></i> Add Step</div>
+            <div class="form-group"><label class="form-label">Step Title</label><input type="text" class="form-input" id="htTitle" placeholder="e.g. Register Your Vehicle"></div>
+            <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="htDesc" rows="2" placeholder="Brief instructions for this step"></textarea></div>
+            <div class="form-group"><label class="form-label">Step Image <span style="color:rgba(255,255,255,0.35);">(optional)</span></label>
+              <div class="upload-zone" id="htUploadZone">
+                <i class="fas fa-camera"></i><p>Upload screenshot or illustration</p>
+                <p style="font-size:0.75rem;margin-top:4px">JPG or PNG</p>
+                <input type="file" accept=".jpg,.jpeg,.png" id="htFile" onchange="handleHtFile(this)">
+              </div>
+              <div id="htFilePreview"></div>
+            </div>
+            <button class="btn btn-success" onclick="saveHtStep()" style="width:100%;justify-content:center"><i class="fas fa-plus"></i> Add Step</button>
+          </div>
+          <div id="htStepsList"></div>
+        </div>
+      </div>
+
       <!-- UPLOAD TO USERS -->
       <div id="uploadsSection" class="section">
         <div class="card">
@@ -888,6 +991,10 @@ function goSection(name,el){
   else if(name==='bizPricing')loadBizPricing();
   else if(name==='fineTypes')loadFineTypes();
   else if(name==='bank')loadBankDetails();
+  else if(name==='socialLinks')loadSocialLinksAdmin();
+  else if(name==='homeSlides')loadSlides();
+  else if(name==='adsManager'){loadAds();_adFile=null;document.getElementById('adFilePreview').innerHTML='';}
+  else if(name==='howtoManager'){loadHtSteps();_htFile=null;document.getElementById('htFilePreview').innerHTML='';}
   else if(name==='uploads'){loadUserList();loadRecentUploads()}
 }
 
@@ -1509,7 +1616,31 @@ async function openUserModal(uid){
     <div class="info-row"><span class="info-label">Phone</span><span class="info-value">${u.phone||'—'}</span></div>
     <div class="info-row"><span class="info-label">Status</span><span class="info-value">${u.verified?'<span style="color:#27ae60">Verified</span>':'<span style="color:#f39c12">Pending</span>'}</span></div>
     <div class="info-row"><span class="info-label">Joined</span><span class="info-value">${fmtDate(u.createdAt)}</span></div>
-    <h4 style="margin:1rem 0 0.5rem;font-size:0.88rem;color:rgba(255,255,255,0.5)">Vehicles</h4>${vehs}`;
+    <h4 style="margin:1rem 0 0.5rem;font-size:0.88rem;color:rgba(255,255,255,0.5)">Vehicles</h4>${vehs}
+    <div style="margin-top:1.2rem;background:#080d18;border-radius:14px;padding:1rem;border:1px solid #1e3355">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="color:white;font-weight:700;font-size:0.9rem"><i class="fas fa-briefcase" style="color:#9b59b6;margin-right:6px"></i>Business Services Access</div>
+          <div style="color:rgba(255,255,255,0.45);font-size:0.75rem;margin-top:3px">Allows user to see Business Services in their app</div>
+        </div>
+        <div onclick="toggleBizAccess('${uid}',this)" id="bizToggle_${uid}"
+          style="width:48px;height:26px;border-radius:30px;cursor:pointer;position:relative;transition:0.3s;flex-shrink:0;background:#1a2640;border:1px solid #2a3a55"
+          data-uid="${uid}" data-active="0">
+          <div style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;transition:0.3s;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>
+        </div>
+      </div>
+    </div>`;
+  // Load current business access state
+  db.ref('users/'+uid+'/businessAccess').once('value').then(snap=>{
+    let tog=document.getElementById('bizToggle_'+uid);
+    if(!tog)return;
+    let active=snap.exists()&&snap.val()===true;
+    tog.dataset.active=active?'1':'0';
+    tog.style.background=active?'#9b59b6':'#1a2640';
+    tog.style.borderColor=active?'rgba(155,89,182,0.4)':'#2a3a55';
+    let knob=tog.querySelector('div');
+    if(knob)knob.style.left=active?'27px':'3px';
+  });
   openModal('userModal');
 }
 async function deleteUserVehicle(uid,vid,plate){
@@ -2302,6 +2433,306 @@ function deleteCpRecord(uid,vid,plate){
     notify('Custom pricing deleted');loadAllCpRecords();
   });
 }
+
+// ============================================================
+// ===== SOCIAL LINKS ADMIN =====
+// ============================================================
+const SOCIAL_PLATFORMS = [
+  {key:'facebook',  label:'Facebook',  icon:'fab fa-facebook-f',  cls:'s-fb',  placeholder:'https://facebook.com/yourpage'},
+  {key:'instagram', label:'Instagram', icon:'fab fa-instagram',   cls:'s-ig',  placeholder:'https://instagram.com/yourhandle'},
+  {key:'tiktok',    label:'TikTok',    icon:'fab fa-tiktok',      cls:'s-tt',  placeholder:'https://tiktok.com/@yourhandle'},
+  {key:'youtube',   label:'YouTube',   icon:'fab fa-youtube',     cls:'s-yt',  placeholder:'https://youtube.com/@yourchannel'},
+  {key:'twitter',   label:'X / Twitter',icon:'fab fa-x-twitter', cls:'s-tw',  placeholder:'https://x.com/yourhandle'},
+  {key:'telegram',  label:'Telegram',  icon:'fab fa-telegram',    cls:'s-tg',  placeholder:'https://t.me/yourchannel'},
+  {key:'whatsapp',  label:'WhatsApp',  icon:'fab fa-whatsapp',    cls:'s-wa',  placeholder:'https://wa.me/9607700000'},
+  {key:'snapchat',  label:'Snapchat',  icon:'fab fa-snapchat',    cls:'s-snap',placeholder:'https://snapchat.com/add/yourname'},
+];
+
+async function loadSocialLinksAdmin(){
+  let snap=await db.ref('social_links').once('value');
+  let existing=snap.exists()?snap.val():{};
+  let form=document.getElementById('socialLinksForm');if(!form)return;
+
+  form.innerHTML=SOCIAL_PLATFORMS.map(p=>{
+    let d=existing[p.key]||{url:'',active:true};
+    return`<div class="social-admin-row">
+      <div class="social-icon-preview ${p.cls}" style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">
+        <i class="${p.icon}" style="color:white"></i>
+      </div>
+      <div>
+        <div style="color:white;font-weight:600;font-size:0.88rem;margin-bottom:5px">${p.label}</div>
+        <input type="url" class="form-input" id="sl_${p.key}" value="${d.url||''}" placeholder="${p.placeholder}"
+          oninput="updateSocialPreview()" style="font-size:0.82rem;padding:8px 12px">
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
+        <label style="color:rgba(255,255,255,0.5);font-size:0.68rem;font-weight:600;text-transform:uppercase">Show</label>
+        <div onclick="toggleSocialActive('${p.key}',this)" id="sl_toggle_${p.key}"
+          style="width:42px;height:24px;border-radius:30px;background:${d.active!==false?'#27ae60':'#1a2640'};cursor:pointer;position:relative;transition:0.3s;border:1px solid ${d.active!==false?'rgba(39,174,96,0.4)':'#2a3a55'};flex-shrink:0"
+          data-active="${d.active!==false?'1':'0'}">
+          <div style="position:absolute;top:2px;left:${d.active!==false?'18px':'2px'};width:18px;height:18px;border-radius:50%;background:white;transition:0.3s;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateSocialPreview();
+}
+
+window.toggleSocialActive=function(key,el){
+  let cur=el.dataset.active==='1';
+  let newVal=!cur;
+  el.dataset.active=newVal?'1':'0';
+  el.style.background=newVal?'#27ae60':'#1a2640';
+  el.style.borderColor=newVal?'rgba(39,174,96,0.4)':'#2a3a55';
+  let knob=el.querySelector('div');
+  if(knob)knob.style.left=newVal?'18px':'2px';
+  updateSocialPreview();
+};
+
+function updateSocialPreview(){
+  let prev=document.getElementById('socialLinksPreview');if(!prev)return;
+  let html='';
+  SOCIAL_PLATFORMS.forEach(p=>{
+    let url=(document.getElementById('sl_'+p.key)||{}).value||'';
+    let tog=document.getElementById('sl_toggle_'+p.key);
+    let active=tog?tog.dataset.active==='1':true;
+    if(url&&active){
+      html+=`<div class="social-btn-prev ${p.cls}" title="${p.label}" style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:14px;font-size:1.2rem">
+        <i class="${p.icon}" style="color:${p.cls==='s-snap'?'#000':'white'}"></i>
+      </div>`;
+    }
+  });
+  prev.innerHTML=html||'<span style="color:rgba(255,255,255,0.25);font-size:0.82rem">No active links yet</span>';
+}
+
+async function saveSocialLinks(){
+  let data={};
+  SOCIAL_PLATFORMS.forEach(p=>{
+    let url=(document.getElementById('sl_'+p.key)||{}).value||'';
+    let tog=document.getElementById('sl_toggle_'+p.key);
+    let active=tog?tog.dataset.active==='1':true;
+    data[p.key]={url:url.trim(),active};
+  });
+  await db.ref('social_links').set(data);
+  notify('Social links saved! Will appear on login screen instantly.');
+  updateSocialPreview();
+}
+
+
+// ============================================================
+// ===== BUSINESS ACCESS TOGGLE =====
+// ============================================================
+window.toggleBizAccess=async function(uid, el){
+  let cur=el.dataset.active==='1';
+  let newVal=!cur;
+  el.dataset.active=newVal?'1':'0';
+  el.style.background=newVal?'#9b59b6':'#1a2640';
+  el.style.borderColor=newVal?'rgba(155,89,182,0.4)':'#2a3a55';
+  let knob=el.querySelector('div');
+  if(knob)knob.style.left=newVal?'27px':'3px';
+  await db.ref('users/'+uid+'/businessAccess').set(newVal);
+  notify(newVal?'Business access granted':'Business access removed');
+};
+
+// ============================================================
+// ===== HOME SLIDES MANAGER =====
+// ============================================================
+let _slideFile=null;
+
+async function loadSlides(){
+  let snap=await db.ref('admin_slides').orderByChild('order').once('value');
+  let div=document.getElementById('slidesList');if(!div)return;
+  if(!snap.exists()){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No slides uploaded yet. Upload images above.</p>';return;}
+  let slides=[];snap.forEach(c=>{let d=c.val();d.id=c.key;slides.push(d);});
+  div.innerHTML=slides.map((s,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px;background:#080d18;border-radius:14px;margin-bottom:8px;border:1px solid #1e3355">
+    <img src="${s.url}" style="width:80px;height:50px;object-fit:cover;border-radius:10px;flex-shrink:0;cursor:pointer" onclick="openLB('${s.url}')">
+    <div style="flex:1;min-width:0">
+      <div style="color:white;font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.label||'Slide '+(i+1)}</div>
+      <div style="color:rgba(255,255,255,0.4);font-size:0.72rem">${fmtDate(s.uploadedAt)}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <!-- Active toggle -->
+      <div onclick="toggleSlideActive('${s.id}','${s.active!==false}',this)" style="width:40px;height:22px;border-radius:20px;background:${s.active!==false?'#27ae60':'#1a2640'};cursor:pointer;position:relative;transition:0.3s;border:1px solid ${s.active!==false?'rgba(39,174,96,0.4)':'#2a3a55'}" data-id="${s.id}" data-active="${s.active!==false?'1':'0'}"><div style="position:absolute;top:2px;left:${s.active!==false?'19px':'2px'};width:16px;height:16px;border-radius:50%;background:white;transition:0.3s"></div></div>
+      <button class="btn btn-danger btn-xs" onclick="deleteSlide('${s.id}','Slide ${i+1}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+async function uploadSlideImage(input){
+  let f=input.files[0];if(!f)return;
+  notify('Uploading slide...','info');
+  try{
+    let ref=storage.ref(`admin_slides/${Date.now()}_${f.name}`);
+    await ref.put(f);let url=await ref.getDownloadURL();
+    let snap=await db.ref('admin_slides').once('value');
+    let order=(snap.numChildren()||0)+1;
+    await db.ref('admin_slides').push({url,label:f.name.replace(/\.[^.]+$/,''),order,active:true,uploadedAt:Date.now()});
+    notify('Slide uploaded!');input.value='';loadSlides();
+  }catch(e){notify('Upload failed: '+e.message,'error');}
+}
+
+async function toggleSlideActive(id,curStr,el){
+  let cur=curStr==='true'||el.dataset.active==='1';
+  let newVal=!cur;
+  await db.ref('admin_slides/'+id).update({active:newVal});
+  el.dataset.active=newVal?'1':'0';
+  el.style.background=newVal?'#27ae60':'#1a2640';
+  el.style.borderColor=newVal?'rgba(39,174,96,0.4)':'#2a3a55';
+  let knob=el.querySelector('div');if(knob)knob.style.left=newVal?'19px':'2px';
+  notify(newVal?'Slide shown':'Slide hidden');
+}
+
+function deleteSlide(id,label){
+  showDelConfirm('Delete '+label+'?','This slide will be removed from the homepage.',async()=>{
+    await db.ref('admin_slides/'+id).remove();notify('Slide deleted');loadSlides();
+  });
+}
+
+// ============================================================
+// ===== ADS / OFFERS MANAGER =====
+// ============================================================
+let _adFile=null;
+
+function handleAdFile(input){
+  let f=input.files[0];if(!f)return;_adFile=f;
+  let prev=document.getElementById('adFilePreview');if(!prev)return;
+  if(f.type.startsWith('image/')){
+    let r=new FileReader();r.onload=e=>{prev.innerHTML=`<div class="upload-preview-box"><img src="${e.target.result}"><div class="upload-preview-info"><div class="fname">${f.name}</div><div class="fsize">${fmtSize(f.size)}</div></div><button class="upload-remove" onclick="_adFile=null;document.getElementById('adFilePreview').innerHTML=''"><i class="fas fa-times"></i></button></div>`};r.readAsDataURL(f);
+  } else {
+    prev.innerHTML=`<div class="upload-preview-box"><div class="doc-icon-big"><i class="fas fa-file-pdf"></i></div><div class="upload-preview-info"><div class="fname">${f.name}</div><div class="fsize">${fmtSize(f.size)}</div></div><button class="upload-remove" onclick="_adFile=null;document.getElementById('adFilePreview').innerHTML=''"><i class="fas fa-times"></i></button></div>`;
+  }
+}
+
+async function saveAd(){
+  let title=document.getElementById('adTitle').value.trim();
+  let desc=document.getElementById('adDesc').value.trim();
+  let linkUrl=document.getElementById('adLinkUrl').value.trim();
+  let linkLabel=document.getElementById('adLinkLabel').value.trim()||'Learn More';
+  if(!title&&!_adFile){notify('Add a title or upload a file','error');return}
+  notify('Saving offer...','info');
+  try{
+    let url='';
+    if(_adFile){
+      let ref=storage.ref(`admin_ads/${Date.now()}_${_adFile.name}`);
+      await ref.put(_adFile);url=await ref.getDownloadURL();
+    }
+    let snap=await db.ref('admin_ads').once('value');
+    let order=(snap.numChildren()||0)+1;
+    await db.ref('admin_ads').push({title,description:desc,url,linkUrl,linkLabel,order,active:true,createdAt:Date.now()});
+    notify('Offer added!');
+    _adFile=null;
+    document.getElementById('adTitle').value='';document.getElementById('adDesc').value='';
+    document.getElementById('adLinkUrl').value='';document.getElementById('adLinkLabel').value='Learn More';
+    document.getElementById('adFile').value='';document.getElementById('adFilePreview').innerHTML='';
+    loadAds();
+  }catch(e){notify('Error: '+e.message,'error');}
+}
+
+async function loadAds(){
+  let snap=await db.ref('admin_ads').orderByChild('order').once('value');
+  let div=document.getElementById('adsList');if(!div)return;
+  if(!snap.exists()){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No offers yet. Add one above.</p>';return;}
+  let ads=[];snap.forEach(c=>{let d=c.val();d.id=c.key;ads.push(d);});
+  div.innerHTML=ads.map((ad,i)=>{
+    let isImg=ad.url&&/(jpg|jpeg|png|gif|webp)/i.test(ad.url.split('?')[0]);
+    let isPdf=ad.url&&/\.pdf/i.test(ad.url.split('?')[0]);
+    return`<div style="background:#080d18;border-radius:14px;padding:12px;margin-bottom:10px;border:1px solid #1e3355">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        ${isImg?`<img src="${ad.url}" style="width:70px;height:50px;object-fit:cover;border-radius:10px;flex-shrink:0;cursor:pointer" onclick="openLB('${ad.url}')">`:isPdf?`<div style="width:70px;height:50px;border-radius:10px;background:rgba(231,76,60,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fas fa-file-pdf" style="color:#e74c3c;font-size:1.5rem"></i></div>`:''}
+        <div style="flex:1;min-width:0">
+          <div style="color:white;font-weight:700;font-size:0.88rem">${ad.title||'Untitled Offer'}</div>
+          ${ad.description?`<div style="color:rgba(255,255,255,0.45);font-size:0.75rem;margin-top:2px">${ad.description}</div>`:''}
+          ${ad.linkUrl?`<div style="color:#5dade2;font-size:0.72rem;margin-top:2px"><i class="fas fa-link" style="margin-right:3px"></i>${ad.linkUrl}</div>`:''}
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <div onclick="toggleAdActive('${ad.id}',this)" style="width:40px;height:22px;border-radius:20px;background:${ad.active!==false?'#27ae60':'#1a2640'};cursor:pointer;position:relative;transition:0.3s;border:1px solid ${ad.active!==false?'rgba(39,174,96,0.4)':'#2a3a55'}" data-active="${ad.active!==false?'1':'0'}"><div style="position:absolute;top:2px;left:${ad.active!==false?'19px':'2px'};width:16px;height:16px;border-radius:50%;background:white;transition:0.3s"></div></div>
+          <button class="btn btn-danger btn-xs" onclick="deleteAd('${ad.id}','${(ad.title||'Offer').replace(/'/g,"\'")}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleAdActive(id,el){
+  let cur=el.dataset.active==='1';let newVal=!cur;
+  await db.ref('admin_ads/'+id).update({active:newVal});
+  el.dataset.active=newVal?'1':'0';el.style.background=newVal?'#27ae60':'#1a2640';el.style.borderColor=newVal?'rgba(39,174,96,0.4)':'#2a3a55';
+  let knob=el.querySelector('div');if(knob)knob.style.left=newVal?'19px':'2px';
+  notify(newVal?'Offer shown to users':'Offer hidden');
+}
+
+function deleteAd(id,label){
+  showDelConfirm('Delete "'+label+'"?','This offer will be removed.',async()=>{
+    await db.ref('admin_ads/'+id).remove();notify('Deleted');loadAds();
+  });
+}
+
+// ============================================================
+// ===== HOW TO USE GUIDE MANAGER =====
+// ============================================================
+let _htFile=null;
+
+function handleHtFile(input){
+  let f=input.files[0];if(!f)return;_htFile=f;
+  let prev=document.getElementById('htFilePreview');if(!prev)return;
+  let r=new FileReader();r.onload=e=>{prev.innerHTML=`<div class="upload-preview-box"><img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;border-radius:10px"><div class="upload-preview-info"><div class="fname">${f.name}</div></div><button class="upload-remove" onclick="_htFile=null;document.getElementById('htFilePreview').innerHTML=''"><i class="fas fa-times"></i></button></div>`};r.readAsDataURL(f);
+}
+
+async function saveHtStep(){
+  let title=document.getElementById('htTitle').value.trim();
+  let desc=document.getElementById('htDesc').value.trim();
+  if(!title){notify('Enter a step title','error');return}
+  notify('Saving step...','info');
+  try{
+    let url='';
+    if(_htFile){
+      let ref=storage.ref(`admin_howto/${Date.now()}_${_htFile.name}`);
+      await ref.put(_htFile);url=await ref.getDownloadURL();
+    }
+    let snap=await db.ref('admin_howto').once('value');
+    let order=(snap.numChildren()||0)+1;
+    await db.ref('admin_howto').push({title,description:desc,url,order,active:true,createdAt:Date.now()});
+    notify('Step added!');
+    _htFile=null;
+    document.getElementById('htTitle').value='';document.getElementById('htDesc').value='';
+    document.getElementById('htFile').value='';document.getElementById('htFilePreview').innerHTML='';
+    loadHtSteps();
+  }catch(e){notify('Error: '+e.message,'error');}
+}
+
+async function loadHtSteps(){
+  let snap=await db.ref('admin_howto').orderByChild('order').once('value');
+  let div=document.getElementById('htStepsList');if(!div)return;
+  if(!snap.exists()){div.innerHTML='<p style="color:rgba(255,255,255,0.35);font-size:0.85rem">No steps yet. Add one above.</p>';return;}
+  let steps=[];snap.forEach(c=>{let d=c.val();d.id=c.key;steps.push(d);});
+  div.innerHTML=steps.map((s,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#080d18;border-radius:14px;margin-bottom:8px;border:1px solid #1e3355">
+    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f39c12,#e67e22);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;color:white;flex-shrink:0">${i+1}</div>
+    ${s.url?`<img src="${s.url}" style="width:60px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer" onclick="openLB('${s.url}')">`:'' }
+    <div style="flex:1;min-width:0">
+      <div style="color:white;font-weight:600;font-size:0.85rem">${s.title}</div>
+      ${s.description?`<div style="color:rgba(255,255,255,0.45);font-size:0.75rem">${s.description}</div>`:''}
+    </div>
+    <div style="display:flex;gap:5px;flex-shrink:0">
+      <div onclick="toggleHtActive('${s.id}',this)" style="width:40px;height:22px;border-radius:20px;background:${s.active!==false?'#27ae60':'#1a2640'};cursor:pointer;position:relative;transition:0.3s;border:1px solid ${s.active!==false?'rgba(39,174,96,0.4)':'#2a3a55'}" data-active="${s.active!==false?'1':'0'}"><div style="position:absolute;top:2px;left:${s.active!==false?'19px':'2px'};width:16px;height:16px;border-radius:50%;background:white;transition:0.3s"></div></div>
+      <button class="btn btn-danger btn-xs" onclick="deleteHtStep('${s.id}','Step ${i+1}')"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+async function toggleHtActive(id,el){
+  let cur=el.dataset.active==='1';let newVal=!cur;
+  await db.ref('admin_howto/'+id).update({active:newVal});
+  el.dataset.active=newVal?'1':'0';el.style.background=newVal?'#27ae60':'#1a2640';el.style.borderColor=newVal?'rgba(39,174,96,0.4)':'#2a3a55';
+  let knob=el.querySelector('div');if(knob)knob.style.left=newVal?'19px':'2px';
+  notify(newVal?'Step shown':'Step hidden');
+}
+
+function deleteHtStep(id,label){
+  showDelConfirm('Delete '+label+'?','This step will be removed from the guide.',async()=>{
+    await db.ref('admin_howto/'+id).remove();notify('Deleted');loadHtSteps();
+  });
+}
+
 </script>
 </body>
 </html>
